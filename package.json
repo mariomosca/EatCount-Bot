@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch bot.ts",
-    "start": "npx prisma migrate deploy && node dist/bot.js",
+    "start": "npx prisma db push && node dist/bot.js",
     "build": "tsc && npx prisma generate"
   },
   "keywords": [],
