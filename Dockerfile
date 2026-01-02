@@ -15,5 +15,5 @@ RUN npm run build
 
 ENV NODE_ENV production
 
-# Запуск збілдженої версії
-CMD ["node", "dist/bot.js"] 
+# Sync database schema and start bot
+CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/bot.js"] 
