@@ -16,7 +16,7 @@ export const registerKeyboardsCallbacks = (
   globalCallbacks(bot);
 
   mainMenuCallbacks(bot);
-  mealMenuCallbacks(bot);
+  mealMenuCallbacks(bot, db);
   statisticsMenuCallbacks(bot, db);
   settingsMenuCallbacks(bot, db);
   editMealsMenuCallbacks(bot, db);

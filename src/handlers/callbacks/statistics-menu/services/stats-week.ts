@@ -17,7 +17,7 @@ export const statsWeekService = async (
   const userId = ctx.from?.id.toString();
   if (!userId) {
     await ctx.reply(
-      'Не вдалося отримати ваш ідентифікатор користувача. Використовуйте команду /start для повторної ініціалізації.'
+      'Non è stato possibile ottenere il tuo ID utente. Usa il comando /start per reinizializzare.'
     );
     return;
   }
@@ -46,8 +46,8 @@ export const statsWeekService = async (
 
     if (meals.length === 0) {
       const message = target
-        ? `За цей тиждень ви ще не додали жодного прийому їжі.\nВаша щоденна ціль: ${target.calorieTarget} ккал.`
-        : 'За цей тиждень ви ще не додали жодного прийому їжі.';
+        ? `Questa settimana non hai ancora aggiunto nessun pasto.\nIl tuo obiettivo giornaliero: ${target.calorieTarget} kcal.`
+        : 'Questa settimana non hai ancora aggiunto nessun pasto.';
       await ctx.reply(message);
       return;
     }
@@ -93,17 +93,17 @@ export const statsWeekService = async (
     const fullDailyMessages = allDates.map((date) => {
       if (dailyStats[date]) {
         const { calories, protein, fat, carbs } = dailyStats[date];
-        return `📅 ${new Date(date).toLocaleDateString('uk-UA', {
+        return `📅 ${new Date(date).toLocaleDateString('it-IT', {
           day: '2-digit',
           month: 'long',
         })}: ⚡: ${calories.toFixed(1)} | 🥩: ${protein.toFixed(
           1
-        )} г | 🧈: ${fat.toFixed(1)} г | 🍞: ${carbs.toFixed(1)} г`;
+        )} g | 🧈: ${fat.toFixed(1)} g | 🍞: ${carbs.toFixed(1)} g`;
       } else {
-        return `📅 ${new Date(date).toLocaleDateString('uk-UA', {
+        return `📅 ${new Date(date).toLocaleDateString('it-IT', {
           day: '2-digit',
           month: 'long',
-        })}: Відсутні прийоми їжі`;
+        })}: Nessun pasto`;
       }
     });
 
@@ -125,23 +125,23 @@ export const statsWeekService = async (
       const statusEmoji = remaining > 0 ? '💫' : remaining === 0 ? '✅' : '⚠️';
       const statusText =
         remaining > 0
-          ? `Залишилось: ${remaining.toFixed(1)} ккал`
+          ? `Rimanenti: ${remaining.toFixed(1)} kcal`
           : remaining === 0
-          ? `Тижнева ціль виконана!`
-          : `Перевищено на: ${Math.abs(remaining).toFixed(1)} ккал`;
+          ? `Obiettivo settimanale raggiunto!`
+          : `Superato di: ${Math.abs(remaining).toFixed(1)} kcal`;
 
       targetInfo =
-        `\n🎯 Тижнева ціль: ${weeklyTarget} ккал\n` +
+        `\n🎯 Obiettivo settimanale: ${weeklyTarget} kcal\n` +
         `${progressBar} ${percentConsumed}%\n` +
         `${statusEmoji} ${statusText}\n`;
     }
 
     const message =
-      `📅 Статистика за тиждень (${weekRangeKyiv}):\n\n` +
-      `⚡ Калорії: ${totalCalories.toFixed(1)} ккал\n` +
-      `🥩 Білки: ${totalProtein.toFixed(1)} г  (${proteinPercentage}%)\n` +
-      `🧈 Жири: ${totalFat.toFixed(1)} г  (${fatPercentage}%)\n` +
-      `🍞 Вуглеводи: ${totalCarbs.toFixed(1)} г  (${carbPercentage}%)` +
+      `📅 Statistiche settimanali (${weekRangeKyiv}):\n\n` +
+      `⚡ Calorie: ${totalCalories.toFixed(1)} kcal\n` +
+      `🥩 Proteine: ${totalProtein.toFixed(1)} g  (${proteinPercentage}%)\n` +
+      `🧈 Grassi: ${totalFat.toFixed(1)} g  (${fatPercentage}%)\n` +
+      `🍞 Carboidrati: ${totalCarbs.toFixed(1)} g  (${carbPercentage}%)` +
       `${targetInfo}\n\n` +
       fullDailyMessages.join('\n');
 
@@ -149,7 +149,7 @@ export const statsWeekService = async (
   } catch (error) {
     console.error('Error fetching weekly statistics:', error);
     await ctx.reply(
-      'Сталася помилка при отриманні статистики за тиждень. Спробуйте пізніше.'
+      'Si è verificato un errore nel recupero delle statistiche settimanali. Riprova più tardi.'
     );
   }
 };

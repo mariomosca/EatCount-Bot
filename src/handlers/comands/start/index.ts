@@ -26,7 +26,7 @@ export const startCommand = (bot: Bot<MyContext>, db: PrismaClient) => {
     }
 
     await ctx.reply(
-      `Вітаю ${from.first_name}! Що ж, почнемо працювати з EatCount Bot!`
+      `Ciao ${from.first_name}! Benvenuto in DietLogger, il tuo assistente per il tracking alimentare!`
     );
 
     await showMainMenu(ctx);

@@ -19,7 +19,7 @@ export const editMealDescriptionHandler = async (
   ctx.session.waitingFor = undefined;
 
   if (!mealId) {
-    await ctx.reply('Помилка: прийом їжі не знайдено для редагування');
+    await ctx.reply('Errore: pasto non trovato per la modifica');
     return;
   }
 
@@ -36,18 +36,18 @@ export const editMealDescriptionHandler = async (
       },
     });
 
-    await ctx.reply('✅ Опис прийому їжі успішно оновлено');
+    await ctx.reply('✅ Descrizione del pasto aggiornata con successo');
 
     await handleEditMeal(ctx, db, mealId);
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Невідома помилка';
+      error instanceof Error ? error.message : 'Errore sconosciuto';
     logger.error(
       `Error updating meal description for user ${userId}: ${errorMessage}`,
       error
     );
     await ctx.reply(
-      'Сталася помилка при оновленні опису. Будь ласка, спробуйте пізніше.'
+      'Si è verificato un errore nell\'aggiornamento. Riprova più tardi.'
     );
   }
 };

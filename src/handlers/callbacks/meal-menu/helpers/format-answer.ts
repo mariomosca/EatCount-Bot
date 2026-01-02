@@ -23,7 +23,7 @@ export const formatAnswer = (
       items.forEach((item) => {
         itemsText += `- ${meal.description} (${item.amountGrams.toFixed(
           1
-        )}г): ${item.calories.toFixed(1)} ккал\n`;
+        )}g): ${item.calories.toFixed(1)} kcal\n`;
       });
     }
   });
@@ -34,17 +34,17 @@ export const formatAnswer = (
   totalCarbs = parseFloat(totalCarbs.toFixed(1));
 
   const notice =
-    '_Примітка: Це наближена оцінка харчової цінності, яка може відрізнятися від фактичних значень._';
+    '_Nota: Questa è una stima approssimativa dei valori nutrizionali, che potrebbe differire dai valori effettivi._';
 
   let failedItemsText = '';
   if (failed.length > 0) {
-    failedItemsText = `\n\n⚠️ Не вдалося отримати дані для наступних продуктів:
+    failedItemsText = `\n\n⚠️ Non è stato possibile ottenere i dati per i seguenti alimenti:
 ${failed
-  .map((item) => `- ${item.food.name} (${item.food.weight} г)`)
+  .map((item) => `- ${item.food.name} (${item.food.weight} g)`)
   .join('\n')}`;
   }
 
-  let macroDetails = `Калорії: ${totalCalories} ккал\nБілки: ${totalProtein} г\nЖири: ${totalFat} г\nВуглеводи: ${totalCarbs} г`;
+  let macroDetails = `Calorie: ${totalCalories} kcal\nProteine: ${totalProtein} g\nGrassi: ${totalFat} g\nCarboidrati: ${totalCarbs} g`;
 
   let mealTypeText = '';
   let mealEmoji = '';
@@ -53,30 +53,30 @@ ${failed
     const mealType = preparedForDb[0].meal.type;
     switch (mealType) {
       case 'BREAKFAST':
-        mealTypeText = 'сніданок';
+        mealTypeText = 'colazione';
         mealEmoji = '🍳';
         break;
       case 'LUNCH':
-        mealTypeText = 'обід';
+        mealTypeText = 'pranzo';
         mealEmoji = '🍝';
         break;
       case 'DINNER':
-        mealTypeText = 'вечеря';
+        mealTypeText = 'cena';
         mealEmoji = '🍽️ ';
         break;
       case 'SNACK':
-        mealTypeText = 'перекус';
+        mealTypeText = 'spuntino';
         mealEmoji = '🍌';
         break;
     }
   }
 
-  return `${mealEmoji} Прийом їжі: ${mealTypeText}
+  return `${mealEmoji} Pasto: ${mealTypeText}
 
-✅ Ми розпізнали:
+✅ Abbiamo riconosciuto:
 ${itemsText}${failedItemsText}
 
-📊 Підсумок:
+📊 Riepilogo:
 ${macroDetails}
 
 ${notice}`;

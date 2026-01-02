@@ -9,7 +9,7 @@ import {
 } from '../../../../lib/fatsecret-client.js';
 import logger from '../../../../lib/logger.js';
 
-const fatSecret = await getFatSecretClient();
+let fatSecret: Awaited<ReturnType<typeof getFatSecretClient>> = null;
 
 export interface ApiFaildFood {
   food: ProcessingResult;
@@ -55,8 +55,19 @@ const findBestMatch = (
   return sortedFoods[0];
 };
 
+const ensureFatSecretClient = async () => {
+  if (!fatSecret) {
+    fatSecret = await getFatSecretClient();
+  }
+  if (!fatSecret) {
+    throw new Error('FatSecret API not configured');
+  }
+  return fatSecret;
+};
+
 const searchFoodItem = async (foodArr: ProcessingResult): Promise<string> => {
-  const response = await fatSecret.searchFood(foodArr.query);
+  const client = await ensureFatSecretClient();
+  const response = await client.searchFood(foodArr.query);
 
   if (Number(response.foods.total_results) === 0 || !response.foods.food) {
     logger.warn(`No results found for "${foodArr.query}"`);
@@ -68,7 +79,8 @@ const searchFoodItem = async (foodArr: ProcessingResult): Promise<string> => {
 };
 
 const getFoodById = async (foodId: string): Promise<FoodDetailsResponse> => {
-  const result = await fatSecret.getFoodById(foodId);
+  const client = await ensureFatSecretClient();
+  const result = await client.getFoodById(foodId);
 
   if (!result.food || !result.food) {
     throw new Error(`Food item with ID "${foodId}" does not exist`);

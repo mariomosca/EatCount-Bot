@@ -1,12 +1,15 @@
 import type { MealType } from '@prisma/client';
 
-export function translateMealTypeToUkrainian(mealType: MealType): string {
+export function translateMealType(mealType: MealType): string {
   const translations: Record<MealType, string> = {
-    BREAKFAST: 'Сніданок',
-    LUNCH: 'Обід',
-    DINNER: 'Вечеря',
-    SNACK: 'Перекус',
+    BREAKFAST: 'Colazione',
+    LUNCH: 'Pranzo',
+    DINNER: 'Cena',
+    SNACK: 'Spuntino',
   };
 
-  return translations[mealType] || 'Інше';
+  return translations[mealType] || 'Altro';
 }
+
+// Alias for backward compatibility
+export const translateMealTypeToUkrainian = translateMealType;

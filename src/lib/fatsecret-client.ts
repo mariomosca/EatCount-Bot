@@ -205,22 +205,29 @@ class FatSecretClient implements IFatSecretClient {
 }
 
 let fatSecretClient: FatSecretClient | null = null;
+let fatSecretInitialized = false;
 
 export const initFatSecretClient = async (
   clientId: string,
   clientSecret: string
 ) => {
+  if (!clientId || !clientSecret) {
+    logger.warn('[FatSecret API]: credentials not set, client disabled');
+    fatSecretInitialized = true;
+    return;
+  }
   fatSecretClient = new FatSecretClient({ clientId, clientSecret });
   await fatSecretClient.initialize();
+  fatSecretInitialized = true;
 };
 
-export const getFatSecretClient = async (): Promise<IFatSecretClient> => {
-  if (!fatSecretClient) {
+export const getFatSecretClient = async (): Promise<IFatSecretClient | null> => {
+  if (!fatSecretInitialized) {
     await initFatSecretClient(
       config.fatSecret.clientId,
       config.fatSecret.clientSecret
     );
   }
 
-  return fatSecretClient!;
+  return fatSecretClient;
 };

@@ -3,13 +3,13 @@ import type { MyContext } from '../types.js';
 
 export const showStatisticsMenu = async (ctx: MyContext) => {
   const keyboard = new InlineKeyboard()
-    .text('📅 Сьогодні', 'stats_tooday')
+    .text('📅 Oggi', 'stats_tooday')
     .row()
-    .text('📆 Цього тижня', 'stats_this_week')
+    .text('📆 Questa settimana', 'stats_this_week')
     .row()
-    .text('📆 Минулого тижня', 'stats_last_week')
+    .text('📆 Settimana scorsa', 'stats_last_week')
     .row()
-    .text('↩️ До головного меню', 'back_to_main_menu');
+    .text('↩️ Menu principale', 'back_to_main_menu');
 
-  await ctx.reply('Оберіть період для статистики:', { reply_markup: keyboard });
+  await ctx.reply('Seleziona il periodo:', { reply_markup: keyboard });
 };

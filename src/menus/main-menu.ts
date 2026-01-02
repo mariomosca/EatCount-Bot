@@ -3,15 +3,15 @@ import type { MyContext } from '../types.js';
 
 export const showMainMenu = async (ctx: MyContext) => {
   const keyboard = new InlineKeyboard()
-    .text('🍴 Додати прийом їжі', 'add_meal')
+    .text('🍴 Aggiungi pasto', 'add_meal')
     .row()
-    .text('📊 Статистика', 'statistics')
+    .text('📊 Statistiche', 'statistics')
     .row()
-    .text('🔄 Редагувати', 'edit_meals')
+    .text('🔄 Modifica', 'edit_meals')
     .row()
-    .text('⚙️ Налаштування', 'settings')
+    .text('⚙️ Impostazioni', 'settings')
     .row()
-    .text('🚀 Розширена статистика на сайті', 'go_to_site');
+    .text('🚀 Statistiche avanzate', 'go_to_site');
 
-  await ctx.reply('Головне меню:', { reply_markup: keyboard });
+  await ctx.reply('Menu principale:', { reply_markup: keyboard });
 };

@@ -3,9 +3,9 @@ import type { MyContext } from '../types.js';
 
 export const showSettingsMenu = async (ctx: MyContext) => {
   const keyboard = new InlineKeyboard()
-    .text('🎯 Ціль по калоріях', 'set_calorie_target')
+    .text('🎯 Obiettivo calorie', 'set_calorie_target')
     .row()
-    .text('↩️ До головного меню', 'back_to_main_menu');
+    .text('↩️ Menu principale', 'back_to_main_menu');
 
-  await ctx.reply('Налаштування:', { reply_markup: keyboard });
+  await ctx.reply('Impostazioni:', { reply_markup: keyboard });
 };

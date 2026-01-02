@@ -24,7 +24,7 @@ export const calorieTargetHandler = async (
 
   if (isNaN(calorieTarget)) {
     await ctx.reply(
-      'Будь ласка, введіть дійсне число для цілі по калоріях, або 0 щоб видалити ціль.'
+      'Per favore inserisci un numero valido per l\'obiettivo calorico, oppure 0 per rimuoverlo.'
     );
     await showSettingsMenu(ctx);
     return;
@@ -32,7 +32,7 @@ export const calorieTargetHandler = async (
 
   if (calorieTarget < 0) {
     await ctx.reply(
-      "Будь ласка, введіть невід'ємне число для цілі по калоріях, або 0 щоб видалити ціль."
+      'Per favore inserisci un numero positivo per l\'obiettivo calorico, oppure 0 per rimuoverlo.'
     );
     await showSettingsMenu(ctx);
     return;
@@ -40,7 +40,7 @@ export const calorieTargetHandler = async (
 
   if (calorieTarget > 10000) {
     await ctx.reply(
-      'Значення цілі занадто велике. Будь ласка, введіть реалістичне значення (до 10000 ккал).'
+      'Il valore è troppo alto. Per favore inserisci un valore realistico (max 10000 kcal).'
     );
     await showSettingsMenu(ctx);
     return;
@@ -59,22 +59,22 @@ export const calorieTargetHandler = async (
           where: { userId: user.id },
         });
 
-        await ctx.reply('✅ Вашу ціль по калоріях успішно видалено.');
+        await ctx.reply('✅ Obiettivo calorico rimosso con successo.');
       } else {
-        await ctx.reply('У вас не встановлено цілі по калоріях.');
+        await ctx.reply('Non hai un obiettivo calorico impostato.');
       }
 
       await showMainMenu(ctx);
       return;
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Невідома помилка';
+        error instanceof Error ? error.message : 'Errore sconosciuto';
       logger.error(
         `Error deleting calorie target for user ${userId}: ${errorMessage}`,
         error
       );
       await ctx.reply(
-        'Сталася помилка при видаленні цілі. Будь ласка, спробуйте пізніше.'
+        'Si è verificato un errore. Riprova più tardi.'
       );
       await showMainMenu(ctx);
       return;
@@ -98,18 +98,18 @@ export const calorieTargetHandler = async (
     });
 
     await ctx.reply(
-      `✅ Ціль по калоріях встановлена на ${calorieTarget} ккал на день.`
+      `✅ Obiettivo calorico impostato a ${calorieTarget} kcal al giorno.`
     );
     await showMainMenu(ctx);
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Невідома помилка';
+      error instanceof Error ? error.message : 'Errore sconosciuto';
     logger.error(
       `Error setting calorie target for user ${userId}: ${errorMessage}`,
       error
     );
     await ctx.reply(
-      'Сталася помилка при встановленні цілі. Будь ласка, спробуйте пізніше.'
+      'Si è verificato un errore. Riprova più tardi.'
     );
     await showMainMenu(ctx);
   }

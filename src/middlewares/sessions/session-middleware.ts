@@ -8,6 +8,7 @@ export interface SessionData {
   editMealId?: string;
   editItemId?: string;
   editPage?: number;
+  pendingMealDescription?: string; // Saved description when user sends food text before selecting meal type
 }
 
 export const sessionMiddleware = (bot: Bot<MyContext>) => {

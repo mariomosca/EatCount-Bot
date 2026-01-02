@@ -1,35 +1,35 @@
 import { DateTime } from 'luxon';
 
-export const timeZone = 'Europe/Kyiv';
+export const timeZone = 'Europe/Rome';
 
 export const getTodayRange = (date = new Date()) => {
-  const startOfDayKyiv = DateTime.fromJSDate(date)
+  const startOfDayRome = DateTime.fromJSDate(date)
     .setZone(timeZone)
     .startOf('day');
-  const endOfDayKyiv = startOfDayKyiv.endOf('day');
+  const endOfDayRome = startOfDayRome.endOf('day');
 
-  const dayAndMonthKyiv = startOfDayKyiv.toFormat('dd MMMM', { locale: 'uk' });
+  const dayAndMonthKyiv = startOfDayRome.toFormat('dd MMMM', { locale: 'it' });
 
   return {
-    startOfDay: startOfDayKyiv.toJSDate(),
-    endOfDay: endOfDayKyiv.toJSDate(),
+    startOfDay: startOfDayRome.toJSDate(),
+    endOfDay: endOfDayRome.toJSDate(),
     dayAndMonthKyiv,
   };
 };
 
 const getWeekRange = (date = new Date()) => {
-  const startOfWeekKyiv = DateTime.fromJSDate(date, { zone: timeZone }).startOf(
+  const startOfWeekRome = DateTime.fromJSDate(date, { zone: timeZone }).startOf(
     'week'
   );
-  const endOfWeekKyiv = startOfWeekKyiv.plus({ days: 7 });
+  const endOfWeekRome = startOfWeekRome.plus({ days: 7 });
 
-  const weekRangeKyiv = `${startOfWeekKyiv.toFormat('dd MMMM', {
-    locale: 'uk',
-  })} - ${endOfWeekKyiv.toFormat('dd MMMM', { locale: 'uk' })}`;
+  const weekRangeKyiv = `${startOfWeekRome.toFormat('dd MMMM', {
+    locale: 'it',
+  })} - ${endOfWeekRome.toFormat('dd MMMM', { locale: 'it' })}`;
 
   return {
-    startOfWeek: startOfWeekKyiv.toJSDate(),
-    endOfWeek: endOfWeekKyiv.toJSDate(),
+    startOfWeek: startOfWeekRome.toJSDate(),
+    endOfWeek: endOfWeekRome.toJSDate(),
     weekRangeKyiv,
   };
 };
@@ -50,9 +50,9 @@ export const getRangeByKeyType = (
 };
 
 export const getAllDatesInWeek = (startOfWeek: Date) => {
-  const startOfWeekKyiv = DateTime.fromJSDate(startOfWeek, { zone: timeZone });
+  const startOfWeekRome = DateTime.fromJSDate(startOfWeek, { zone: timeZone });
   return Array.from({ length: 7 }, (_, i) => {
-    return startOfWeekKyiv.plus({ days: i }).toFormat('yyyy-MM-dd');
+    return startOfWeekRome.plus({ days: i }).toFormat('yyyy-MM-dd');
   });
 };
 

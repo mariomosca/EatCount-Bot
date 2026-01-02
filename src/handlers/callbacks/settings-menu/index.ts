@@ -32,10 +32,10 @@ const askForCaloriesTarget = async (ctx: MyContext, db: PrismaClient) => {
     let message;
 
     if (existingTarget) {
-      message = `Ваша поточна ціль: ${existingTarget.calorieTarget} ккал на день.\nЩоб змінити ціль, введіть нове значення.\nЩоб видалити ціль, введіть 0.`;
+      message = `Il tuo obiettivo attuale: ${existingTarget.calorieTarget} kcal al giorno.\nPer modificare l'obiettivo, inserisci un nuovo valore.\nPer rimuovere l'obiettivo, inserisci 0.`;
     } else {
       message =
-        'Щоб встановити денну ціль по калоріях, введіть бажану кількість калорій (наприклад: 2000).\nЩоб скасувати, введіть 0.';
+        'Per impostare un obiettivo calorico giornaliero, inserisci il numero di calorie desiderato (es: 2000).\nPer annullare, inserisci 0.';
     }
 
     ctx.session.waitingFor = 'calorie_target';
@@ -44,7 +44,7 @@ const askForCaloriesTarget = async (ctx: MyContext, db: PrismaClient) => {
   } catch (error) {
     logger.error(`Error fetching user settings for user ${userId}:`, error);
     await ctx.reply(
-      'Сталася помилка при отриманні налаштувань. Спробуйте ще раз.'
+      'Si è verificato un errore nel recupero delle impostazioni. Riprova.'
     );
     await showMainMenu(ctx);
   }

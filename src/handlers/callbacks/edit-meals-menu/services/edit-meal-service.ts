@@ -101,7 +101,7 @@ export const handleEditMeal = async (
     });
 
     if (!meal) {
-      await ctx.reply('Прийом їжі не знайдений');
+      await ctx.reply('Pasto non trovato');
       return;
     }
 
@@ -109,10 +109,10 @@ export const handleEditMeal = async (
     await showEditMealMenu(ctx, meal);
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Невідома помилка';
+      error instanceof Error ? error.message : 'Errore sconosciuto';
     logger.error(`Error getting meal for editing: ${errorMessage}`, error);
     await ctx.reply(
-      'Сталася помилка при отриманні даних. Будь ласка, спробуйте пізніше.'
+      'Si è verificato un errore nel recupero dei dati. Per favore, riprova più tardi.'
     );
   }
 };
@@ -146,14 +146,14 @@ export const handleSetMealType = async (
       },
     });
 
-    await ctx.reply(`✅ Тип прийому їжі успішно змінено на ${mealType}`);
+    await ctx.reply(`✅ Tipo di pasto modificato con successo in ${mealType}`);
     await handleEditMeal(ctx, db, mealId);
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Невідома помилка';
+      error instanceof Error ? error.message : 'Errore sconosciuto';
     logger.error(`Error updating meal type: ${errorMessage}`, error);
     await ctx.reply(
-      'Сталася помилка при оновленні типу. Будь ласка, спробуйте пізніше.'
+      'Si è verificato un errore nell\'aggiornamento del tipo. Per favore, riprova più tardi.'
     );
   }
 };
@@ -169,9 +169,9 @@ export const handleDeleteMeal = async (ctx: MyContext, mealId: string) => {
     await confirmMealDeletion(ctx, mealId);
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Невідома помилка';
+      error instanceof Error ? error.message : 'Errore sconosciuto';
     logger.error(`Error preparing meal deletion: ${errorMessage}`, error);
-    await ctx.reply('Сталася помилка. Будь ласка, спробуйте пізніше.');
+    await ctx.reply('Si è verificato un errore. Per favore, riprova più tardi.');
   }
 };
 
@@ -196,14 +196,14 @@ export const handleConfirmDeleteMeal = async (
       },
     });
 
-    await ctx.reply('✅ Прийом їжі успішно видалено');
+    await ctx.reply('✅ Pasto eliminato con successo');
     await handleBackToMealsList(ctx);
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Невідома помилка';
+      error instanceof Error ? error.message : 'Errore sconosciuto';
     logger.error(`Error deleting meal: ${errorMessage}`, error);
     await ctx.reply(
-      'Сталася помилка при видаленні прийому їжі. Будь ласка, спробуйте пізніше.'
+      'Si è verificato un errore nell\'eliminazione del pasto. Per favore, riprova più tardi.'
     );
   }
 };
@@ -220,15 +220,15 @@ export const handleEditMealDescription = async (
   }
 
   try {
-    await ctx.reply('Будь ласка, введіть новий опис прийому їжі:');
+    await ctx.reply('Per favore, inserisci la nuova descrizione del pasto:');
 
     ctx.session.editMealId = mealId;
     ctx.session.waitingFor = 'meal_edit_description';
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Невідома помилка';
+      error instanceof Error ? error.message : 'Errore sconosciuto';
     logger.error(`Error preparing description editing: ${errorMessage}`, error);
-    await ctx.reply('Сталася помилка. Будь ласка, спробуйте пізніше.');
+    await ctx.reply('Si è verificato un errore. Per favore, riprova più tardi.');
   }
 };
 

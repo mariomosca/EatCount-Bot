@@ -1,7 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 import type { MyContext } from '../types.js';
 import type { MealType } from '@prisma/client';
-import { translateMealTypeToUkrainian } from '../helpers/meal-type-translator.js';
+import { translateMealType } from '../helpers/meal-type-translator.js';
 
 export const showTodayMealTypes = async (
   ctx: MyContext,
@@ -9,11 +9,11 @@ export const showTodayMealTypes = async (
 ) => {
   if (mealTypes.length === 0) {
     const keyboard = new InlineKeyboard().text(
-      '↩️ До меню редагування',
+      '↩️ Menu modifica',
       'back_to_edit_menu'
     );
 
-    await ctx.reply('Сьогодні ще не було додано прийомів їжі', {
+    await ctx.reply('Oggi non hai ancora aggiunto pasti', {
       reply_markup: keyboard,
     });
     return;
@@ -22,7 +22,7 @@ export const showTodayMealTypes = async (
   const keyboard = new InlineKeyboard();
 
   mealTypes.forEach((mealType) => {
-    const translatedType = translateMealTypeToUkrainian(mealType);
+    const translatedType = translateMealType(mealType);
     keyboard
       .text(
         `${getEmojiForMealType(mealType)} ${translatedType}`,
@@ -31,9 +31,9 @@ export const showTodayMealTypes = async (
       .row();
   });
 
-  keyboard.text('↩️ До меню редагування', 'back_to_edit_menu');
+  keyboard.text('↩️ Menu modifica', 'back_to_edit_menu');
 
-  await ctx.reply('Виберіть тип прийому їжі для редагування:', {
+  await ctx.reply('Seleziona il tipo di pasto da modificare:', {
     reply_markup: keyboard,
   });
 };

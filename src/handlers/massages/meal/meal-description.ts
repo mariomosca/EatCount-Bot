@@ -13,12 +13,12 @@ export const mealDescription = async (ctx: MyContext, db: PrismaClient) => {
 
   if (!ctx.session.mealType) {
     await ctx.reply(
-      'Будь ласка, спочатку виберіть тип прийому їжі. Використайте меню для вибору.'
+      'Per favore, prima seleziona il tipo di pasto dal menu.'
     );
   }
 
   if (!ctx.from) {
-    await ctx.reply('Не вдалося отримати інформацію про користувача.');
+    await ctx.reply('Non riesco a identificare l\'utente.');
     return;
   }
 
@@ -31,7 +31,7 @@ export const mealDescription = async (ctx: MyContext, db: PrismaClient) => {
   ctx.session.mealType = undefined;
 
   try {
-    await ctx.reply('Аналізую ваш прийом їжі, будь ласка, зачекайте...');
+    await ctx.reply('Sto analizzando il tuo pasto, attendi...');
 
     const nutritionMessage = await mealDescriptionProcessor({
       db,
@@ -49,7 +49,7 @@ export const mealDescription = async (ctx: MyContext, db: PrismaClient) => {
       error
     );
     await ctx.reply(
-      `Виникла помилка при обробці вашого прийому їжі. Будь ласка, спробуйте ще раз пізніше.`
+      'Si è verificato un errore nell\'elaborazione del pasto. Riprova più tardi.'
     );
   } finally {
     await showMainMenu(ctx);

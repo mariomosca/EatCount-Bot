@@ -3,7 +3,7 @@ import type { MyContext } from '../../../../types.js';
 import type { Meal, MealItem } from '@prisma/client';
 import { getUserFromDb } from '../../../../helpers/get-user-from-db.js';
 import { getTodayRange } from '../helpers/get-time-ranges.js';
-import { translateMealTypeToUkrainian } from '../../../../helpers/meal-type-translator.js';
+import { translateMealType } from '../../../../helpers/meal-type-translator.js';
 
 interface MealWithItems extends Meal {
   items: MealItem[];
@@ -51,8 +51,8 @@ export const statsTodayService = async (ctx: MyContext, db: PrismaClient) => {
 
     if (meals.length === 0) {
       const message = target
-        ? `Сьогодні ви ще не додали жодного прийому їжі.\nВаша ціль на день: ${target.calorieTarget} ккал.`
-        : 'Сьогодні ви ще не додали жодного прийому їжі.';
+        ? `Oggi non hai ancora aggiunto nessun pasto.\nIl tuo obiettivo giornaliero: ${target.calorieTarget} kcal.`
+        : 'Oggi non hai ancora aggiunto nessun pasto.';
       await ctx.reply(message);
       return;
     }
@@ -100,11 +100,11 @@ export const statsTodayService = async (ctx: MyContext, db: PrismaClient) => {
     const mealTypeDetails = Object.entries(mealTypeStats)
       .filter(([_, stats]) => stats && stats.calories > 0)
       .map(([type, stats]) => {
-        return `🍽 ${translateMealTypeToUkrainian(
+        return `🍽 ${translateMealType(
           type as MealType
         )}: ⚡: ${stats.calories.toFixed(1)} | 🥩: ${stats.protein.toFixed(
           1
-        )} г | 🧈: ${stats.fat.toFixed(1)} г | 🍞: ${stats.carbs.toFixed(1)} г`;
+        )} g | 🧈: ${stats.fat.toFixed(1)} g | 🍞: ${stats.carbs.toFixed(1)} g`;
       })
       .join('\n');
 
@@ -138,35 +138,35 @@ export const statsTodayService = async (ctx: MyContext, db: PrismaClient) => {
       const statusEmoji = remaining > 0 ? '💫' : remaining === 0 ? '✅' : '⚠️';
       const statusText =
         remaining > 0
-          ? `Залишилось: ${remaining.toFixed(1)} ккал`
+          ? `Rimanenti: ${remaining.toFixed(1)} kcal`
           : remaining === 0
-          ? `Ціль виконана!`
-          : `Перевищено на: ${Math.abs(remaining).toFixed(1)} ккал`;
+          ? `Obiettivo raggiunto!`
+          : `Superato di: ${Math.abs(remaining).toFixed(1)} kcal`;
 
       targetInfo =
-        `\n\n🎯 Денна ціль: ${target.calorieTarget} ккал\n` +
+        `\n\n🎯 Obiettivo giornaliero: ${target.calorieTarget} kcal\n` +
         `${progressBar} ${percentConsumed}%\n` +
         `${statusEmoji} ${statusText}\n`;
     }
 
     const message =
-      `📆 Сьогодні, ${dayAndMonthKyiv}\n\n` +
-      `⚡ Калорії: ${totalCalories.toFixed(1)} ккал\n` +
-      `🥩 Білки: ${totalProtein.toFixed(1)} г  (${proteinPercentage}%)\n` +
-      `🧈 Жири: ${totalFat.toFixed(1)} г  (${fatPercentage}%)\n` +
-      `🍞 Вуглеводи: ${totalCarbs.toFixed(1)} г  (${carbPercentage}%)` +
+      `📆 Oggi, ${dayAndMonthKyiv}\n\n` +
+      `⚡ Calorie: ${totalCalories.toFixed(1)} kcal\n` +
+      `🥩 Proteine: ${totalProtein.toFixed(1)} g  (${proteinPercentage}%)\n` +
+      `🧈 Grassi: ${totalFat.toFixed(1)} g  (${fatPercentage}%)\n` +
+      `🍞 Carboidrati: ${totalCarbs.toFixed(1)} g  (${carbPercentage}%)` +
       `${targetInfo}\n` +
-      `🥦 Клітковина: ${totalFiber.toFixed(1)} г\n` +
-      `🍭 Цукор: ${totalSugar.toFixed(1)} г\n` +
-      `🧂 Натрій: ${totalSodium.toFixed(0)} мг\n` +
-      `🩸 Холестерин: ${totalCholesterol.toFixed(0)} мг\n\n` +
-      `Деталі по типам прийомів їжі:\n${mealTypeDetails}`;
+      `🥦 Fibre: ${totalFiber.toFixed(1)} g\n` +
+      `🍭 Zuccheri: ${totalSugar.toFixed(1)} g\n` +
+      `🧂 Sodio: ${totalSodium.toFixed(0)} mg\n` +
+      `🩸 Colesterolo: ${totalCholesterol.toFixed(0)} mg\n\n` +
+      `Dettagli per tipo di pasto:\n${mealTypeDetails}`;
 
     await ctx.reply(message);
   } catch (error) {
     console.error("Error fetching today's statistics:", error);
     await ctx.reply(
-      'Сталася помилка при отриманні статистики. Спробуйте пізніше.'
+      'Si è verificato un errore nel recupero delle statistiche. Riprova più tardi.'
     );
   }
 };

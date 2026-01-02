@@ -9,7 +9,9 @@ import { processAiDescription } from '../helpers/ai-description-processing.js';
 import { fatSecretDbProcessor } from '../helpers/fatsecret-db-processor.js';
 import { formatAnswer } from '../helpers/format-answer.js';
 import { nutritionFatsecret } from '../helpers/nutrition-fatsecret-data.js';
+import { aiNutritionEstimation } from '../helpers/ai-nutrition-estimation.js';
 import { writeToDb } from '../helpers/write-meal-to-db.js';
+import logger from '../../../../lib/logger.js';
 
 const manualDisableMoc = true;
 const isMoc = config.server.nodeEnv === 'development' && !manualDisableMoc;
@@ -35,11 +37,27 @@ export const mealDescriptionProcessor = async ({
         query: mealDescription,
       });
 
-  console.log(`Processed foods: ${JSON.stringify(processedFoods, null, 2)}`);
+  logger.info(`Processed foods: ${JSON.stringify(processedFoods, null, 2)}`);
 
-  const { validFoods, failedFoods } = await nutritionFatsecret(processedFoods);
+  // Try FatSecret first
+  let { validFoods, failedFoods } = await nutritionFatsecret(processedFoods);
 
-  console.log(JSON.stringify(validFoods, null, 2));
+  logger.info(`FatSecret results - valid: ${validFoods.length}, failed: ${failedFoods.length}`);
+
+  // If FatSecret failed for some foods, use AI estimation as fallback
+  if (failedFoods.length > 0) {
+    logger.info(`Using AI fallback for ${failedFoods.length} foods`);
+    const { estimatedFoods, stillFailedFoods } =
+      await aiNutritionEstimation(failedFoods);
+
+    // Add successfully estimated foods to validFoods
+    validFoods = [...validFoods, ...estimatedFoods];
+    failedFoods = stillFailedFoods;
+
+    logger.info(
+      `After AI fallback - valid: ${validFoods.length}, still failed: ${failedFoods.length}`
+    );
+  }
 
   const preparedForDb = fatSecretDbProcessor(validFoods, mealType);
 

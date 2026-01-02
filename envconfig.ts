@@ -10,6 +10,10 @@ const requireEnv = (name: string): string => {
   return value;
 };
 
+const optionalEnv = (name: string): string => {
+  return process.env[name] || '';
+};
+
 export const config = {
   server: {
     nodeEnv: requireEnv('NODE_ENV'),
@@ -24,10 +28,10 @@ export const config = {
     apiKey: requireEnv('OPENAI_API_KEY'),
   },
   fatSecret: {
-    clientId: requireEnv('FAT_SECRET_CLIENT_ID'),
-    clientSecret: requireEnv('FAT_SECRET_SECRET'),
+    clientId: optionalEnv('FAT_SECRET_CLIENT_ID'),
+    clientSecret: optionalEnv('FAT_SECRET_SECRET'),
   },
   usda: {
-    apiKey: requireEnv('USDA_API_KEY'),
+    apiKey: optionalEnv('USDA_API_KEY'),
   },
 };
