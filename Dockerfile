@@ -15,5 +15,8 @@ RUN npm run build
 
 ENV NODE_ENV production
 
+# Expose API port for MCP integration
+EXPOSE 3000
+
 # Sync database schema and start bot
 CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/bot.js"] 

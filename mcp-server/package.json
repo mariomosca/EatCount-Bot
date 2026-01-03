@@ -1,0 +1,21 @@
+{
+  "name": "diet-logger-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MCP server for diet-logger - allows Claude to interact with meal data via API",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17",
+    "typescript": "^5.8.3",
+    "tsx": "^4.19.4"
+  }
+}

@@ -17,6 +17,10 @@ const optionalEnv = (name: string): string => {
 export const config = {
   server: {
     nodeEnv: requireEnv('NODE_ENV'),
+    apiPort: parseInt(process.env.API_PORT || '3000', 10),
+  },
+  api: {
+    key: optionalEnv('API_KEY'),
   },
   db: {
     url: requireEnv('DATABASE_URL'),

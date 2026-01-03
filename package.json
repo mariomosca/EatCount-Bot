@@ -12,10 +12,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@hono/node-server": "^1.13.8",
     "@prisma/client": "^6.7.0",
     "@types/node": "^22.15.17",
     "dotenv": "^16.5.0",
     "grammy": "^1.36.1",
+    "hono": "^4.7.4",
     "luxon": "^3.6.1",
     "openai": "^4.98.0",
     "ts-node": "^10.9.2",
