@@ -1,24 +1,18 @@
 import type { MyContext } from '../../../types.js';
-import type { MealType, PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 import logger from '../../../lib/logger.js';
 import { analyzeFoodImage } from '../../../lib/ai-services.js';
-import { showMainMenu } from '../../../menus/main-menu.js';
-import { mealDescriptionProcessor } from '../../callbacks/meal-menu/services/meal-description-processor.js';
+import { showMealTypeConfirmation } from '../../../menus/meal-menu.js';
+import { detectMealType } from '../../callbacks/meal-menu/helpers/ai-meal-type-detection.js';
 
 /**
  * Handle photo messages for meal logging
- * Flow: photo → GPT-4 Vision analysis → meal processing
+ * Flow: photo → GPT-4 Vision analysis → AI meal type detection → confirm → process
+ * Same flow as text messages for consistency
  */
-export const photoMealHandler = async (ctx: MyContext, db: PrismaClient) => {
+export const photoMealHandler = async (ctx: MyContext, _db: PrismaClient) => {
   if (!ctx.message || !ctx.message.photo) {
-    return;
-  }
-
-  if (!ctx.session.mealType) {
-    await ctx.reply(
-      '📸 Ho ricevuto una foto! Per favore, prima seleziona il tipo di pasto dal menu.'
-    );
     return;
   }
 
@@ -26,12 +20,6 @@ export const photoMealHandler = async (ctx: MyContext, db: PrismaClient) => {
     await ctx.reply('Non riesco a identificare l\'utente.');
     return;
   }
-
-  const mealType = ctx.session.mealType as MealType;
-  const userId = ctx.from.id.toString();
-
-  ctx.session.waitingFor = undefined;
-  ctx.session.mealType = undefined;
 
   try {
     await ctx.reply('📸 Sto analizzando la foto del tuo pasto...');
@@ -49,28 +37,41 @@ export const photoMealHandler = async (ctx: MyContext, db: PrismaClient) => {
 
     if (!foodDescription || foodDescription.trim().length === 0) {
       await ctx.reply('❌ Non sono riuscito a riconoscere il cibo nella foto. Riprova con una foto più chiara.');
-      await showMainMenu(ctx);
       return;
     }
 
-    await ctx.reply(`🍽️ Ho riconosciuto: "${foodDescription}"\n\n🔍 Calcolo i valori nutrizionali...`);
+    // Combine image analysis with caption if present
+    const caption = ctx.message.caption?.trim() || '';
+    const fullDescription = caption
+      ? `${foodDescription} (${caption})`
+      : foodDescription;
 
-    // Process the recognized food description
-    const nutritionMessage = await mealDescriptionProcessor({
-      db,
-      mealDescription: foodDescription,
-      mealType,
-      userId,
-    });
+    // Show what was recognized
+    await ctx.reply(`🍽️ Ho riconosciuto: "${foodDescription}"${caption ? `\n📝 Caption: "${caption}"` : ''}`);
 
-    await ctx.reply(nutritionMessage, { parse_mode: 'Markdown' });
+    // Save description for later processing (same as text flow)
+    ctx.session.pendingMealDescription = fullDescription;
+
+    // Detect meal type using AI (from food description + caption + time)
+    const currentHour = new Date().getHours();
+    const detectionInput = caption || foodDescription;
+    const detection = await detectMealType(detectionInput, currentHour);
+
+    logger.info(
+      `Photo meal type detection: ${detection.detectedType} (${detection.confidence})`
+    );
+
+    // Show confirmation menu (same as text flow)
+    await showMealTypeConfirmation(
+      ctx,
+      detection.detectedType,
+      detection.confidence
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(`Error processing photo meal for user ${userId}: ${errorMessage}`, error);
+    logger.error(`Error analyzing photo: ${errorMessage}`, error);
     await ctx.reply(
       '❌ Si è verificato un errore nell\'analisi della foto. Riprova più tardi.'
     );
-  } finally {
-    await showMainMenu(ctx);
   }
 };
