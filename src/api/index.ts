@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import type { PrismaClient } from '@prisma/client';
-import { createRequire } from 'module';
+import fs from 'fs';
+import path from 'path';
 
 import { config } from '../../envconfig.js';
 import logger from '../lib/logger.js';
@@ -11,9 +12,9 @@ import { createSummaryRoutes } from './routes/summary.js';
 import { createTargetRoutes } from './routes/target.js';
 import { createPlansRoutes } from './routes/plans.js';
 
-// Get version from package.json
-const require = createRequire(import.meta.url);
-const pkg = require('../../package.json');
+// Get version from package.json (works in both dev and prod)
+const pkgPath = path.join(process.cwd(), 'package.json');
+const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
 export const APP_VERSION = pkg.version;
 
 // Simple API key middleware
