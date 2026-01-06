@@ -8,6 +8,7 @@ import { mealMenuCallbacks } from './meal-menu/index.js';
 import { statisticsMenuCallbacks } from './statistics-menu/index.js';
 import { settingsMenuCallbacks } from './settings-menu/index.js';
 import { editMealsMenuCallbacks } from './edit-meals-menu/index.js';
+import { nutritionPlanMenuCallbacks } from './nutrition-plan-menu/index.js';
 
 export const registerKeyboardsCallbacks = (
   bot: Bot<MyContext>,
@@ -20,4 +21,5 @@ export const registerKeyboardsCallbacks = (
   statisticsMenuCallbacks(bot, db);
   settingsMenuCallbacks(bot, db);
   editMealsMenuCallbacks(bot, db);
+  nutritionPlanMenuCallbacks(bot, db);
 };

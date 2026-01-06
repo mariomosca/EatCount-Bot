@@ -11,6 +11,7 @@ import { formatAnswer } from '../helpers/format-answer.js';
 import { nutritionFatsecret } from '../helpers/nutrition-fatsecret-data.js';
 import { aiNutritionEstimation } from '../helpers/ai-nutrition-estimation.js';
 import { writeToDb } from '../helpers/write-meal-to-db.js';
+import { compareWithPlan } from '../helpers/compare-with-plan.js';
 import logger from '../../../../lib/logger.js';
 
 const manualDisableMoc = true;
@@ -70,6 +71,25 @@ export const mealDescriptionProcessor = async ({
     failedFoods,
     aiApiUsage: usage,
   });
+
+  // Calculate total calories for plan comparison
+  const totalCalories = preparedForDb.reduce(
+    (sum, item) => sum + item.meal.totalCalories,
+    0
+  );
+
+  // Compare with nutrition plan (if exists)
+  const comparison = await compareWithPlan({
+    db,
+    userId,
+    mealType,
+    loggedCalories: Math.round(totalCalories),
+  });
+
+  // Append comparison message if user has a plan
+  if (comparison.hasPlan && comparison.message) {
+    return nutritionMessage + comparison.message;
+  }
 
   return nutritionMessage;
 };

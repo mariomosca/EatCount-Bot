@@ -1,6 +1,6 @@
 {
   "name": "eatcount-bot",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "tsx watch bot.ts",
@@ -20,6 +20,7 @@
     "hono": "^4.7.4",
     "luxon": "^3.6.1",
     "openai": "^4.98.0",
+    "pdf-to-img": "^5.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "winston": "^3.17.0",

@@ -22,6 +22,7 @@ model User {
   meals                    Meal[]
   refreshTokens            RefreshToken[]
   targets                  Target?
+  nutritionPlan            NutritionPlan?
 }
 
 model RefreshToken {
@@ -117,6 +118,40 @@ model FaildSearchByFatSecretApi {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("failed_search_in_fat_secret")
+}
+
+model NutritionPlan {
+  id         String             @id @default(uuid())
+  userId     String             @unique
+  name       String
+  createdAt  DateTime           @default(now())
+  rawContent String?
+  days       NutritionPlanDay[]
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("nutrition_plans")
+}
+
+model NutritionPlanDay {
+  id        String              @id @default(uuid())
+  planId    String
+  dayOfWeek Int
+  meals     NutritionPlanMeal[]
+  plan      NutritionPlan       @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@map("nutrition_plan_days")
+}
+
+model NutritionPlanMeal {
+  id          String   @id @default(uuid())
+  dayId       String
+  mealType    MealType
+  targetKcal  Int
+  description String
+  details     String?
+  day         NutritionPlanDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
+  @@map("nutrition_plan_meals")
 }
 
 enum MealType {

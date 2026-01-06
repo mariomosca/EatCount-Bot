@@ -187,6 +187,57 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['mealId'],
         },
       },
+      {
+        name: 'get_nutrition_plan',
+        description:
+          'Get the active nutrition plan with all days and meals. Returns the complete weekly plan.',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'get_today_plan',
+        description:
+          "Get today's nutrition plan. Shows what meals are planned for today with target calories.",
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'get_plan_for_day',
+        description:
+          'Get nutrition plan for a specific day of the week (1=Monday, 7=Sunday).',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            dayOfWeek: {
+              type: 'number',
+              description: 'Day of week (1=Monday, 2=Tuesday, ..., 7=Sunday)',
+              minimum: 1,
+              maximum: 7,
+            },
+          },
+          required: ['dayOfWeek'],
+        },
+      },
+      {
+        name: 'get_plan_meal',
+        description:
+          "Get planned meal for today by meal type. Shows what was planned for breakfast/lunch/dinner/snack today.",
+        inputSchema: {
+          type: 'object',
+          properties: {
+            mealType: {
+              type: 'string',
+              enum: ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'],
+              description: 'Type of meal to get from plan',
+            },
+          },
+          required: ['mealType'],
+        },
+      },
     ],
   };
 });
@@ -341,6 +392,142 @@ Remaining: ${data.remaining} kcal`;
 
         return {
           content: [{ type: 'text', text: `Meal ${mealId} deleted.` }],
+        };
+      }
+
+      case 'get_nutrition_plan': {
+        const data = await apiCall('/plans');
+
+        if (!data.plan) {
+          return {
+            content: [{ type: 'text', text: 'No nutrition plan found. Upload a PDF via Telegram bot to create one.' }],
+          };
+        }
+
+        const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const mealTypeNames: Record<string, string> = {
+          BREAKFAST: 'Breakfast',
+          LUNCH: 'Lunch',
+          SNACK: 'Snack',
+          DINNER: 'Dinner',
+        };
+
+        let planText = `📋 ${data.plan.name}\n\n`;
+
+        for (const day of data.plan.days) {
+          planText += `**${dayNames[day.dayOfWeek]}**\n`;
+          const totalKcal = day.meals.reduce((sum: number, m: any) => sum + m.targetKcal, 0);
+
+          for (const meal of day.meals) {
+            planText += `  ${mealTypeNames[meal.mealType]}: ${meal.description} (${meal.targetKcal} kcal)\n`;
+          }
+          planText += `  Total: ${totalKcal} kcal\n\n`;
+        }
+
+        return {
+          content: [{ type: 'text', text: planText }],
+        };
+      }
+
+      case 'get_today_plan': {
+        const data = await apiCall('/plans/today');
+
+        if (!data.day) {
+          return {
+            content: [{ type: 'text', text: data.message || 'No plan for today.' }],
+          };
+        }
+
+        const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const mealTypeNames: Record<string, string> = {
+          BREAKFAST: 'Breakfast',
+          LUNCH: 'Lunch',
+          SNACK: 'Snack',
+          DINNER: 'Dinner',
+        };
+
+        let planText = `📋 Today's Plan (${dayNames[data.day.dayOfWeek]})\n\n`;
+        const totalKcal = data.day.meals.reduce((sum: number, m: any) => sum + m.targetKcal, 0);
+
+        for (const meal of data.day.meals) {
+          planText += `${mealTypeNames[meal.mealType]}: ${meal.description}\n`;
+          planText += `  Target: ${meal.targetKcal} kcal\n`;
+          if (meal.details) {
+            planText += `  Details: ${meal.details}\n`;
+          }
+          planText += '\n';
+        }
+
+        planText += `Total Target: ${totalKcal} kcal`;
+
+        return {
+          content: [{ type: 'text', text: planText }],
+        };
+      }
+
+      case 'get_plan_for_day': {
+        const { dayOfWeek } = args as { dayOfWeek: number };
+        const data = await apiCall(`/plans/day/${dayOfWeek}`);
+
+        if (!data.day) {
+          return {
+            content: [{ type: 'text', text: data.message || 'No plan for this day.' }],
+          };
+        }
+
+        const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const mealTypeNames: Record<string, string> = {
+          BREAKFAST: 'Breakfast',
+          LUNCH: 'Lunch',
+          SNACK: 'Snack',
+          DINNER: 'Dinner',
+        };
+
+        let planText = `📋 Plan for ${dayNames[dayOfWeek]}\n\n`;
+        const totalKcal = data.day.meals.reduce((sum: number, m: any) => sum + m.targetKcal, 0);
+
+        for (const meal of data.day.meals) {
+          planText += `${mealTypeNames[meal.mealType]}: ${meal.description}\n`;
+          planText += `  Target: ${meal.targetKcal} kcal\n`;
+          if (meal.details) {
+            planText += `  Details: ${meal.details}\n`;
+          }
+          planText += '\n';
+        }
+
+        planText += `Total Target: ${totalKcal} kcal`;
+
+        return {
+          content: [{ type: 'text', text: planText }],
+        };
+      }
+
+      case 'get_plan_meal': {
+        const { mealType } = args as { mealType: string };
+        const data = await apiCall(`/plans/meal/${mealType}`);
+
+        if (!data.meal) {
+          return {
+            content: [{ type: 'text', text: data.message || 'No meal found for this type in today\'s plan.' }],
+          };
+        }
+
+        const mealTypeNames: Record<string, string> = {
+          BREAKFAST: 'Breakfast',
+          LUNCH: 'Lunch',
+          SNACK: 'Snack',
+          DINNER: 'Dinner',
+        };
+
+        let mealText = `📋 Planned ${mealTypeNames[mealType]} for Today\n\n`;
+        mealText += `${data.meal.description}\n`;
+        mealText += `Target: ${data.meal.targetKcal} kcal\n`;
+        if (data.meal.details) {
+          mealText += `Details: ${data.meal.details}`;
+        }
+
+        return {
+          content: [{ type: 'text', text: mealText }],
         };
       }
 

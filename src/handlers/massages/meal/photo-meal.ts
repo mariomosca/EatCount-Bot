@@ -32,30 +32,27 @@ export const photoMealHandler = async (ctx: MyContext, _db: PrismaClient) => {
     const file = await ctx.api.getFile(largestPhoto.file_id);
     const fileUrl = `https://api.telegram.org/file/bot${ctx.api.token}/${file.file_path}`;
 
-    // Analyze image with GPT-4 Vision
-    const foodDescription = await analyzeFoodImage(fileUrl);
+    // Get caption if present (used as hint for Vision)
+    const caption = ctx.message.caption?.trim() || undefined;
+
+    // Analyze image with GPT-4 Vision (passing caption as hint)
+    const foodDescription = await analyzeFoodImage(fileUrl, caption);
 
     if (!foodDescription || foodDescription.trim().length === 0) {
       await ctx.reply('❌ Non sono riuscito a riconoscere il cibo nella foto. Riprova con una foto più chiara.');
       return;
     }
 
-    // Combine image analysis with caption if present
-    const caption = ctx.message.caption?.trim() || '';
-    const fullDescription = caption
-      ? `${foodDescription} (${caption})`
-      : foodDescription;
-
-    // Show what was recognized
-    await ctx.reply(`🍽️ Ho riconosciuto: "${foodDescription}"${caption ? `\n📝 Caption: "${caption}"` : ''}`);
+    // Show what was recognized (caption was already used by Vision for better analysis)
+    await ctx.reply(`🍽️ Ho riconosciuto: "${foodDescription}"${caption ? `\n📝 (con hint: "${caption}")` : ''}`);
 
     // Save description for later processing (same as text flow)
-    ctx.session.pendingMealDescription = fullDescription;
+    // Caption is already incorporated in Vision's analysis, so we just use foodDescription
+    ctx.session.pendingMealDescription = foodDescription;
 
-    // Detect meal type using AI (from food description + caption + time)
+    // Detect meal type using AI (from food description + time)
     const currentHour = new Date().getHours();
-    const detectionInput = caption || foodDescription;
-    const detection = await detectMealType(detectionInput, currentHour);
+    const detection = await detectMealType(foodDescription, currentHour);
 
     logger.info(
       `Photo meal type detection: ${detection.detectedType} (${detection.confidence})`

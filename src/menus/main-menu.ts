@@ -5,6 +5,8 @@ export const showMainMenu = async (ctx: MyContext) => {
   const keyboard = new InlineKeyboard()
     .text('🍴 Aggiungi pasto', 'add_meal')
     .row()
+    .text('📋 Piano Nutrizionale', 'nutrition_plan_menu')
+    .row()
     .text('📊 Statistiche', 'statistics')
     .row()
     .text('🔄 Modifica', 'edit_meals')

@@ -7,6 +7,7 @@ import { calorieTargetHandler } from './settings/calorie-target.js';
 import { editMealDescriptionHandler } from './meal/edit-meal-description.js';
 import { voiceMealHandler } from './meal/voice-meal.js';
 import { photoMealHandler } from './meal/photo-meal.js';
+import { pdfPlanHandler } from './nutrition-plan/pdf-handler.js';
 import { showMealTypeConfirmation } from '../../menus/meal-menu.js';
 import { detectMealType } from '../callbacks/meal-menu/helpers/ai-meal-type-detection.js';
 import logger from '../../lib/logger.js';
@@ -75,5 +76,12 @@ export const registerMassages = (bot: Bot<MyContext>, db: PrismaClient) => {
   // Photo messages - GPT-4 Vision analysis
   bot.on('message:photo', async (ctx) => {
     await photoMealHandler(ctx, db);
+  });
+
+  // Document messages - PDF upload for nutrition plans
+  bot.on('message:document', async (ctx) => {
+    if (ctx.session.waitingFor === 'nutrition_plan_pdf') {
+      await pdfPlanHandler(ctx, db);
+    }
   });
 };
