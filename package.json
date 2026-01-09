@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch bot.ts",
-    "start": "sleep 10 && npx prisma db push && node dist/bot.js",
+    "start": "sleep 20 && npx prisma db push && node dist/bot.js",
     "build": "tsc && npx prisma generate"
   },
   "keywords": [],
