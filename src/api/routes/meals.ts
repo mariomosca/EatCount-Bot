@@ -99,6 +99,39 @@ export const createMealsRoutes = (db: PrismaClient) => {
     }
   });
 
+  // PUT /meals/:id - Update a meal
+  app.put('/:id', async (c) => {
+    try {
+      const mealId = c.req.param('id');
+      const body = await c.req.json();
+      const { description, mealType, calories, protein, fat, carbs, timestamp } = body;
+
+      const updateData: Record<string, any> = {};
+      if (description !== undefined) updateData.description = description;
+      if (mealType !== undefined) updateData.type = mealType as MealType;
+      if (calories !== undefined) updateData.totalCalories = calories;
+      if (protein !== undefined) updateData.totalProtein = protein;
+      if (fat !== undefined) updateData.totalFat = fat;
+      if (carbs !== undefined) updateData.totalCarbs = carbs;
+      if (timestamp !== undefined) updateData.timestamp = new Date(timestamp);
+
+      if (Object.keys(updateData).length === 0) {
+        return c.json({ error: 'No fields to update' }, 400);
+      }
+
+      const meal = await db.meal.update({
+        where: { id: mealId },
+        data: updateData,
+        include: { items: true },
+      });
+
+      return c.json({ meal });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return c.json({ error: message }, 500);
+    }
+  });
+
   // DELETE /meals/:id - Delete a meal
   app.delete('/:id', async (c) => {
     try {

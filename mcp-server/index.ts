@@ -188,6 +188,51 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'update_meal',
+        description:
+          'Update an existing meal. You can modify description, meal type, nutritional values, or move it to a different date/time.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            mealId: {
+              type: 'string',
+              description: 'ID of the meal to update',
+            },
+            description: {
+              type: 'string',
+              description: 'New description of the meal',
+            },
+            mealType: {
+              type: 'string',
+              enum: ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'],
+              description: 'New meal type',
+            },
+            calories: {
+              type: 'number',
+              description: 'New total calories',
+            },
+            protein: {
+              type: 'number',
+              description: 'New protein in grams',
+            },
+            fat: {
+              type: 'number',
+              description: 'New fat in grams',
+            },
+            carbs: {
+              type: 'number',
+              description: 'New carbohydrates in grams',
+            },
+            timestamp: {
+              type: 'string',
+              description:
+                'New date/time for the meal in ISO format (e.g., 2024-01-15T12:30:00)',
+            },
+          },
+          required: ['mealId'],
+        },
+      },
+      {
         name: 'get_nutrition_plan',
         description:
           'Get the active nutrition plan with all days and meals. Returns the complete weekly plan.',
@@ -392,6 +437,44 @@ Remaining: ${data.remaining} kcal`;
 
         return {
           content: [{ type: 'text', text: `Meal ${mealId} deleted.` }],
+        };
+      }
+
+      case 'update_meal': {
+        const { mealId, description, mealType, calories, protein, fat, carbs, timestamp } =
+          args as {
+            mealId: string;
+            description?: string;
+            mealType?: string;
+            calories?: number;
+            protein?: number;
+            fat?: number;
+            carbs?: number;
+            timestamp?: string;
+          };
+
+        const updateData: Record<string, any> = {};
+        if (description !== undefined) updateData.description = description;
+        if (mealType !== undefined) updateData.mealType = mealType;
+        if (calories !== undefined) updateData.calories = calories;
+        if (protein !== undefined) updateData.protein = protein;
+        if (fat !== undefined) updateData.fat = fat;
+        if (carbs !== undefined) updateData.carbs = carbs;
+        if (timestamp !== undefined) updateData.timestamp = timestamp;
+
+        const data = await apiCall(`/meals/${mealId}`, {
+          method: 'PUT',
+          body: JSON.stringify(updateData),
+        });
+
+        const updatedFields = Object.keys(updateData).join(', ');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Meal ${mealId} updated. Changed: ${updatedFields}. New values: ${data.meal.description} (${data.meal.totalCalories} kcal)`,
+            },
+          ],
         };
       }
 
