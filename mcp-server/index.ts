@@ -322,7 +322,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             const itemsList = meal.items
               .map((item: any) => `  - ${item.name}: ${item.calories} kcal`)
               .join('\n');
-            return `${meal.type} (${new Date(meal.timestamp).toLocaleString('it-IT')}):
+            return `[ID: ${meal.id}] ${meal.type} (${new Date(meal.timestamp).toLocaleString('it-IT')}):
 ${meal.description}
 ${itemsList}
 Total: ${meal.totalCalories} kcal | P: ${meal.totalProtein}g | F: ${meal.totalFat}g | C: ${meal.totalCarbs}g`;
