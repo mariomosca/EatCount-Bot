@@ -8,6 +8,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
 // Load .env from parent directory
 dotenv.config({ path: path.join(import.meta.dirname, '..', '.env') });
@@ -281,6 +282,136 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ['mealType'],
+        },
+      },
+      {
+        name: 'update_meal_plan_meal',
+        description:
+          'Update a single meal in the nutrition plan. Allows modifying target calories, description, or details.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            mealId: {
+              type: 'string',
+              description: 'ID of the planned meal to update',
+            },
+            targetKcal: {
+              type: 'number',
+              description: 'New target calories for this meal',
+            },
+            description: {
+              type: 'string',
+              description: 'New description for this meal',
+            },
+            details: {
+              type: 'string',
+              description: 'New details/ingredients for this meal',
+            },
+          },
+          required: ['mealId'],
+        },
+      },
+      {
+        name: 'update_meal_plan_day',
+        description:
+          'Update all meals for a specific day in the nutrition plan. Replaces all meals for that day.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            dayOfWeek: {
+              type: 'number',
+              description: 'Day of week to update (1=Monday, 7=Sunday)',
+              minimum: 1,
+              maximum: 7,
+            },
+            meals: {
+              type: 'array',
+              description: 'Array of meals for this day',
+              items: {
+                type: 'object',
+                properties: {
+                  mealType: {
+                    type: 'string',
+                    enum: ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'],
+                  },
+                  targetKcal: { type: 'number' },
+                  description: { type: 'string' },
+                  details: { type: 'string' },
+                },
+                required: ['mealType', 'targetKcal', 'description'],
+              },
+            },
+          },
+          required: ['dayOfWeek', 'meals'],
+        },
+      },
+      {
+        name: 'upload_meal_plan_pdf',
+        description:
+          'Upload and parse a nutrition plan PDF from a local file path. The PDF will be analyzed using AI to extract meals and calories.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: {
+              type: 'string',
+              description: 'Absolute path to the PDF file on the local filesystem',
+            },
+          },
+          required: ['filePath'],
+        },
+      },
+      {
+        name: 'upload_meal_plan_json',
+        description:
+          'Upload a nutrition plan from structured JSON data. Bypasses PDF parsing.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+              description: 'Name of the nutrition plan',
+            },
+            days: {
+              type: 'array',
+              description: 'Array of days with meals',
+              items: {
+                type: 'object',
+                properties: {
+                  dayOfWeek: {
+                    type: 'number',
+                    description: '1=Monday, 7=Sunday',
+                  },
+                  meals: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        mealType: {
+                          type: 'string',
+                          enum: ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'],
+                        },
+                        targetKcal: { type: 'number' },
+                        description: { type: 'string' },
+                        details: { type: 'string' },
+                      },
+                      required: ['mealType', 'targetKcal', 'description'],
+                    },
+                  },
+                },
+                required: ['dayOfWeek', 'meals'],
+              },
+            },
+          },
+          required: ['name', 'days'],
+        },
+      },
+      {
+        name: 'delete_meal_plan',
+        description:
+          'Delete the active nutrition plan completely. This cannot be undone.',
+        inputSchema: {
+          type: 'object',
+          properties: {},
         },
       },
     ],
@@ -611,6 +742,153 @@ Remaining: ${data.remaining} kcal`;
 
         return {
           content: [{ type: 'text', text: mealText }],
+        };
+      }
+
+      case 'update_meal_plan_meal': {
+        const { mealId, targetKcal, description, details } = args as {
+          mealId: string;
+          targetKcal?: number;
+          description?: string;
+          details?: string;
+        };
+
+        const updateData: Record<string, any> = {};
+        if (targetKcal !== undefined) updateData.targetKcal = targetKcal;
+        if (description !== undefined) updateData.description = description;
+        if (details !== undefined) updateData.details = details;
+
+        const data = await apiCall(`/plans/meal/${mealId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(updateData),
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Meal updated successfully: ${data.meal.description} (${data.meal.targetKcal} kcal)`,
+            },
+          ],
+        };
+      }
+
+      case 'update_meal_plan_day': {
+        const { dayOfWeek, meals } = args as {
+          dayOfWeek: number;
+          meals: Array<{
+            mealType: string;
+            targetKcal: number;
+            description: string;
+            details?: string;
+          }>;
+        };
+
+        const data = await apiCall(`/plans/day/${dayOfWeek}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ meals }),
+        });
+
+        const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const totalKcal = meals.reduce((sum, m) => sum + m.targetKcal, 0);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Day updated successfully: ${dayNames[dayOfWeek]} with ${meals.length} meals (${totalKcal} kcal total)`,
+            },
+          ],
+        };
+      }
+
+      case 'upload_meal_plan_pdf': {
+        const { filePath } = args as { filePath: string };
+
+        // Read file from filesystem
+        if (!fs.existsSync(filePath)) {
+          return {
+            content: [{ type: 'text', text: `File not found: ${filePath}` }],
+            isError: true,
+          };
+        }
+
+        const fileBuffer = fs.readFileSync(filePath);
+        const fileName = path.basename(filePath);
+
+        // Create FormData and upload
+        const formData = new FormData();
+        const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+        formData.append('file', blob, fileName);
+
+        const headers: Record<string, string> = {};
+        if (API_KEY) {
+          headers['X-API-Key'] = API_KEY;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/plans/upload`, {
+          method: 'POST',
+          headers,
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: response.statusText }));
+          return {
+            content: [{ type: 'text', text: `Upload failed: ${error.error}` }],
+            isError: true,
+          };
+        }
+
+        const data = await response.json();
+        const totalMeals = data.plan.days.reduce((sum: number, d: any) => sum + d.meals.length, 0);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Plan "${data.plan.name}" uploaded successfully! ${data.plan.days.length} days, ${totalMeals} meals.`,
+            },
+          ],
+        };
+      }
+
+      case 'upload_meal_plan_json': {
+        const { name, days } = args as {
+          name: string;
+          days: Array<{
+            dayOfWeek: number;
+            meals: Array<{
+              mealType: string;
+              targetKcal: number;
+              description: string;
+              details?: string;
+            }>;
+          }>;
+        };
+
+        const data = await apiCall('/plans', {
+          method: 'POST',
+          body: JSON.stringify({ name, days }),
+        });
+
+        const totalMeals = days.reduce((sum, d) => sum + d.meals.length, 0);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Plan "${name}" created successfully! ${days.length} days, ${totalMeals} meals.`,
+            },
+          ],
+        };
+      }
+
+      case 'delete_meal_plan': {
+        const data = await apiCall('/plans', { method: 'DELETE' });
+
+        return {
+          content: [{ type: 'text', text: 'Nutrition plan deleted successfully.' }],
         };
       }
 
