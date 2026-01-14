@@ -646,9 +646,9 @@ Remaining: ${data.remaining} kcal`;
       case 'get_today_plan': {
         const data = await apiCall('/plans/today');
 
-        if (!data.day) {
+        if (data.error || !data.meals) {
           return {
-            content: [{ type: 'text', text: data.message || 'No plan for today.' }],
+            content: [{ type: 'text', text: data.error || 'No plan for today.' }],
           };
         }
 
@@ -660,10 +660,10 @@ Remaining: ${data.remaining} kcal`;
           DINNER: 'Dinner',
         };
 
-        let planText = `📋 Today's Plan (${dayNames[data.day.dayOfWeek]})\n\n`;
-        const totalKcal = data.day.meals.reduce((sum: number, m: any) => sum + m.targetKcal, 0);
+        let planText = `📋 Today's Plan (${dayNames[data.dayOfWeek]})\n\n`;
+        const totalKcal = data.meals.reduce((sum: number, m: any) => sum + m.targetKcal, 0);
 
-        for (const meal of data.day.meals) {
+        for (const meal of data.meals) {
           planText += `${mealTypeNames[meal.mealType]}: ${meal.description}\n`;
           planText += `  Target: ${meal.targetKcal} kcal\n`;
           if (meal.details) {
@@ -683,9 +683,9 @@ Remaining: ${data.remaining} kcal`;
         const { dayOfWeek } = args as { dayOfWeek: number };
         const data = await apiCall(`/plans/day/${dayOfWeek}`);
 
-        if (!data.day) {
+        if (data.error || !data.meals) {
           return {
-            content: [{ type: 'text', text: data.message || 'No plan for this day.' }],
+            content: [{ type: 'text', text: data.error || 'No plan for this day.' }],
           };
         }
 
@@ -698,9 +698,9 @@ Remaining: ${data.remaining} kcal`;
         };
 
         let planText = `📋 Plan for ${dayNames[dayOfWeek]}\n\n`;
-        const totalKcal = data.day.meals.reduce((sum: number, m: any) => sum + m.targetKcal, 0);
+        const totalKcal = data.meals.reduce((sum: number, m: any) => sum + m.targetKcal, 0);
 
-        for (const meal of data.day.meals) {
+        for (const meal of data.meals) {
           planText += `${mealTypeNames[meal.mealType]}: ${meal.description}\n`;
           planText += `  Target: ${meal.targetKcal} kcal\n`;
           if (meal.details) {
