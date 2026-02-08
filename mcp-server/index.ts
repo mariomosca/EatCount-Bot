@@ -527,7 +527,7 @@ Remaining: ${data.remaining} kcal`;
         const { calories } = args as { calories: number };
         await apiCall('/target', {
           method: 'PUT',
-          body: JSON.stringify({ calories }),
+          body: JSON.stringify({ calories: Number(calories) }),
         });
 
         return {
@@ -549,7 +549,14 @@ Remaining: ${data.remaining} kcal`;
 
         await apiCall('/meals', {
           method: 'POST',
-          body: JSON.stringify({ description, mealType, calories, protein, fat, carbs }),
+          body: JSON.stringify({
+            description,
+            mealType,
+            calories: Number(calories),
+            protein: protein !== undefined ? Number(protein) : undefined,
+            fat: fat !== undefined ? Number(fat) : undefined,
+            carbs: carbs !== undefined ? Number(carbs) : undefined,
+          }),
         });
 
         return {
@@ -587,10 +594,10 @@ Remaining: ${data.remaining} kcal`;
         const updateData: Record<string, any> = {};
         if (description !== undefined) updateData.description = description;
         if (mealType !== undefined) updateData.mealType = mealType;
-        if (calories !== undefined) updateData.calories = calories;
-        if (protein !== undefined) updateData.protein = protein;
-        if (fat !== undefined) updateData.fat = fat;
-        if (carbs !== undefined) updateData.carbs = carbs;
+        if (calories !== undefined) updateData.calories = Number(calories);
+        if (protein !== undefined) updateData.protein = Number(protein);
+        if (fat !== undefined) updateData.fat = Number(fat);
+        if (carbs !== undefined) updateData.carbs = Number(carbs);
         if (timestamp !== undefined) updateData.timestamp = timestamp;
 
         const data = await apiCall(`/meals/${mealId}`, {
@@ -754,7 +761,7 @@ Remaining: ${data.remaining} kcal`;
         };
 
         const updateData: Record<string, any> = {};
-        if (targetKcal !== undefined) updateData.targetKcal = targetKcal;
+        if (targetKcal !== undefined) updateData.targetKcal = Number(targetKcal);
         if (description !== undefined) updateData.description = description;
         if (details !== undefined) updateData.details = details;
 
@@ -784,13 +791,18 @@ Remaining: ${data.remaining} kcal`;
           }>;
         };
 
+        const mealsWithNumbers = meals.map(meal => ({
+          ...meal,
+          targetKcal: Number(meal.targetKcal),
+        }));
+
         const data = await apiCall(`/plans/day/${dayOfWeek}`, {
           method: 'PATCH',
-          body: JSON.stringify({ meals }),
+          body: JSON.stringify({ meals: mealsWithNumbers }),
         });
 
         const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        const totalKcal = meals.reduce((sum, m) => sum + m.targetKcal, 0);
+        const totalKcal = mealsWithNumbers.reduce((sum, m) => sum + m.targetKcal, 0);
 
         return {
           content: [
@@ -867,9 +879,18 @@ Remaining: ${data.remaining} kcal`;
           }>;
         };
 
+        const daysWithNumbers = days.map(day => ({
+          ...day,
+          dayOfWeek: Number(day.dayOfWeek),
+          meals: day.meals.map(meal => ({
+            ...meal,
+            targetKcal: Number(meal.targetKcal),
+          })),
+        }));
+
         const data = await apiCall('/plans', {
           method: 'POST',
-          body: JSON.stringify({ name, days }),
+          body: JSON.stringify({ name, days: daysWithNumbers }),
         });
 
         const totalMeals = days.reduce((sum, d) => sum + d.meals.length, 0);
