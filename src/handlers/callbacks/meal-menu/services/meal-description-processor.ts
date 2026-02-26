@@ -8,8 +8,7 @@ import { getUserFromDb } from '../../../../helpers/get-user-from-db.js';
 import { processAiDescription } from '../helpers/ai-description-processing.js';
 import { fatSecretDbProcessor } from '../helpers/fatsecret-db-processor.js';
 import { formatAnswer } from '../helpers/format-answer.js';
-import { nutritionFatsecret } from '../helpers/nutrition-fatsecret-data.js';
-import { aiNutritionEstimation } from '../helpers/ai-nutrition-estimation.js';
+import { multiSourceNutritionLookup } from '../helpers/nutrition-multi-source.js';
 import { writeToDb } from '../helpers/write-meal-to-db.js';
 import { compareWithPlan } from '../helpers/compare-with-plan.js';
 import logger from '../../../../lib/logger.js';
@@ -40,25 +39,13 @@ export const mealDescriptionProcessor = async ({
 
   logger.info(`Processed foods: ${JSON.stringify(processedFoods, null, 2)}`);
 
-  // Try FatSecret first
-  let { validFoods, failedFoods } = await nutritionFatsecret(processedFoods);
+  // Multi-source nutrition lookup (CREA -> OpenFoodFacts -> FatSecret -> AI)
+  const { validFoods, failedFoods, sources } =
+    await multiSourceNutritionLookup(processedFoods);
 
-  logger.info(`FatSecret results - valid: ${validFoods.length}, failed: ${failedFoods.length}`);
-
-  // If FatSecret failed for some foods, use AI estimation as fallback
-  if (failedFoods.length > 0) {
-    logger.info(`Using AI fallback for ${failedFoods.length} foods`);
-    const { estimatedFoods, stillFailedFoods } =
-      await aiNutritionEstimation(failedFoods);
-
-    // Add successfully estimated foods to validFoods
-    validFoods = [...validFoods, ...estimatedFoods];
-    failedFoods = stillFailedFoods;
-
-    logger.info(
-      `After AI fallback - valid: ${validFoods.length}, still failed: ${failedFoods.length}`
-    );
-  }
+  logger.info(
+    `Nutrition sources: CREA=${sources.crea}, OFF=${sources.off}, FatSecret=${sources.fatSecret}, AI=${sources.ai}`
+  );
 
   const preparedForDb = fatSecretDbProcessor(validFoods, mealType);
 
