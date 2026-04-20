@@ -1,0 +1,103 @@
+'use client';
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { compliance } from '@/lib/api';
+import { HeatmapGrid, HeatmapEmptyState } from '@/components/compliance/HeatmapGrid';
+
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`animate-pulse rounded-lg bg-slate-800 ${className}`} />;
+}
+
+type RangeOption = '30' | '60' | '90';
+
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function formatDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export default function HistoryClient() {
+  const [range, setRange] = useState<RangeOption>('30');
+
+  const endDate = new Date();
+  endDate.setHours(23, 59, 59, 999);
+  const startDate = addDays(endDate, -(parseInt(range) - 1));
+  startDate.setHours(0, 0, 0, 0);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['compliance', 'range', range],
+    queryFn: () =>
+      compliance.getRange(formatDate(startDate), formatDate(endDate)).then((r) => r.data),
+  });
+
+  const records = data?.records ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Storico Compliance</h1>
+          <p className="text-slate-400 text-sm mt-1">Aderenza al piano alimentare nel tempo</p>
+        </div>
+
+        {/* Filtro range */}
+        <div
+          className="flex gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1"
+          role="group"
+          aria-label="Seleziona periodo"
+        >
+          {(['30', '60', '90'] as RangeOption[]).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                range === r
+                  ? 'bg-slate-700 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+              aria-pressed={range === r}
+            >
+              {r}gg
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Heatmap */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-full" />
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: 35 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-square" />
+              ))}
+            </div>
+            <div className="grid grid-cols-4 gap-3 mt-4">
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+            </div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-400 text-sm">
+            Errore nel caricamento dati. Verifica la connessione al backend.
+          </div>
+        ) : records.length === 0 ? (
+          <HeatmapEmptyState />
+        ) : (
+          <HeatmapGrid records={records} startDate={startDate} endDate={endDate} />
+        )}
+      </div>
+    </div>
+  );
+}

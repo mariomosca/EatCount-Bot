@@ -1,9 +1,9 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { Header } from '@/components/shared/Header';
-import DashboardClient from './DashboardClient';
+import SettingsClient from './SettingsClient';
 
-export default async function DashboardPage() {
+export default async function SettingsPage() {
   const session = await auth();
   if (!session) redirect('/login');
 
@@ -11,7 +11,7 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-slate-950">
       <Header session={session} />
       <main className="max-w-4xl mx-auto px-4 py-6">
-        <DashboardClient />
+        <SettingsClient session={session} />
       </main>
     </div>
   );

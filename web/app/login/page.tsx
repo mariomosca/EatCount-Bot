@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (error) setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -32,12 +34,13 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('Invalid credentials');
+        setError('Credenziali non valide. Riprova.');
       } else if (result?.ok) {
         router.push('/dashboard');
+        router.refresh();
       }
     } catch (_err) {
-      setError('An error occurred. Please try again.');
+      setError('Errore di rete. Riprova tra un momento.');
     } finally {
       setIsLoading(false);
     }
@@ -45,21 +48,28 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 to-slate-900 px-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">DietLogger</h1>
-          <p className="text-slate-400">Manage your nutrition plan compliance</p>
+          <div className="w-14 h-14 bg-slate-800 rounded-2xl mx-auto mb-4 flex items-center justify-center border border-slate-700">
+            <span className="text-2xl" aria-hidden="true">🥗</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white">DietLogger</h1>
+          <p className="text-slate-400 text-sm mt-1">Compliance tracking giornaliero</p>
         </div>
 
         <Card className="bg-slate-900 border-slate-800">
-          <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>Enter your credentials to access your dashboard</CardDescription>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Accedi</CardTitle>
+            <CardDescription>Inserisci le tue credenziali per continuare</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-500 text-sm">
+                <div
+                  role="alert"
+                  className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm"
+                >
                   {error}
                 </div>
               )}
@@ -77,7 +87,8 @@ export default function LoginPage() {
                   onChange={handleChange}
                   required
                   disabled={isLoading}
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                  autoComplete="email"
+                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-slate-500"
                 />
               </div>
 
@@ -94,25 +105,26 @@ export default function LoginPage() {
                   onChange={handleChange}
                   required
                   disabled={isLoading}
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                  autoComplete="current-password"
+                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-slate-500"
                 />
               </div>
 
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-11 bg-slate-700 hover:bg-slate-600 text-white"
+                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white mt-2"
               >
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Accesso in corso...
+                  </>
+                ) : (
+                  'Accedi'
+                )}
               </Button>
             </form>
-
-            <div className="mt-6 p-4 bg-slate-800 border border-slate-700 rounded-md text-sm text-slate-300">
-              <p className="font-semibold mb-2">Demo Credentials (Placeholder)</p>
-              <p>Email: any@example.com</p>
-              <p>Password: any password</p>
-              <p className="text-xs text-slate-500 mt-2">Real authentication implemented in Sprint 3 phase 2</p>
-            </div>
           </CardContent>
         </Card>
       </div>
