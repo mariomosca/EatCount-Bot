@@ -10,7 +10,7 @@ async function handler(
   const { path } = await context.params;
   const targetPath = path.join('/');
   const search = request.nextUrl.search;
-  const url = `${API_URL}/api/${targetPath}${search}`;
+  const url = `${API_URL}/${targetPath}${search}`;
 
   const headers = new Headers();
   if (API_KEY) headers.set('X-API-Key', API_KEY);
