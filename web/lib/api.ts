@@ -1,13 +1,9 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_DIET_API_URL || 'http://localhost:3000';
-const API_KEY = process.env.DIET_API_KEY;
-
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: '/api/diet',
   headers: {
     'Content-Type': 'application/json',
-    ...(API_KEY && { 'X-API-Key': API_KEY }),
   },
 });
 
