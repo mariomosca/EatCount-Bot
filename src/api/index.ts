@@ -11,6 +11,7 @@ import { createMealsRoutes } from './routes/meals.js';
 import { createSummaryRoutes } from './routes/summary.js';
 import { createTargetRoutes } from './routes/target.js';
 import { createPlansRoutes } from './routes/plans.js';
+import { createComplianceRoutes } from './routes/compliance.js';
 
 // Get version from package.json (works in both dev and prod)
 const pkgPath = path.join(process.cwd(), 'package.json');
@@ -57,6 +58,7 @@ export const startApiServer = (db: PrismaClient) => {
   api.route('/summary', createSummaryRoutes(db));
   api.route('/target', createTargetRoutes(db));
   api.route('/plans', createPlansRoutes(db));
+  api.route('/compliance', createComplianceRoutes(db));
 
   app.route('/api', api);
 

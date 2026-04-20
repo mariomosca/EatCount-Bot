@@ -1,13 +1,17 @@
 import { Bot } from 'grammy';
+import cron from 'node-cron';
 import type { MyContext } from './types.js';
 
 import logger, { botRequestLogger, botErrorLogger } from './lib/logger.js';
 import { initDb } from './lib/db.js';
+import { createComplianceService } from './lib/complianceService.js';
 
 import { registerMiddlewares } from './middlewares/index.js';
 import { registerCommands } from './handlers/comands/index.js';
 import { registerMassages } from './handlers/massages/index.js';
 import { registerKeyboardsCallbacks } from './handlers/callbacks/index.js';
+
+const MARIO_TELEGRAM_ID = '179533089';
 
 export const startTelegramBot = async (token: string) => {
   const bot = new Bot<MyContext>(token);
@@ -23,6 +27,41 @@ export const startTelegramBot = async (token: string) => {
   bot.catch((err) => {
     botErrorLogger(err);
   });
+
+  // Daily compliance reminder at 20:00 Rome time
+  cron.schedule(
+    '0 20 * * *',
+    async () => {
+      try {
+        const complianceService = createComplianceService(db);
+        const todayCompliance = await complianceService.getTodayCompliance();
+
+        if (!todayCompliance) {
+          logger.info('[Cron]: Sending daily compliance reminder');
+          const { InlineKeyboard } = await import('grammy');
+          const keyboard = new InlineKeyboard()
+            .text('Piano OK ✓', 'compliance_full')
+            .text('Deviazioni ⚠️', 'compliance_partial')
+            .text('Off day ✕', 'compliance_off');
+
+          await bot.api.sendMessage(
+            MARIO_TELEGRAM_ID,
+            'Reminder: compliance dieta non ancora registrata oggi.\n\nCome e\' andata con il piano alimentare?',
+            { reply_markup: keyboard }
+          );
+        } else {
+          logger.info(`[Cron]: Compliance already logged today (${todayCompliance.status}), skipping reminder`);
+        }
+      } catch (error) {
+        logger.error('[Cron]: Failed to send compliance reminder', { error });
+      }
+    },
+    {
+      timezone: 'Europe/Rome',
+    }
+  );
+
+  logger.info('[Cron]: Daily compliance reminder scheduled at 20:00 Europe/Rome');
 
   try {
     bot.start({

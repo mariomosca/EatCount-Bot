@@ -414,6 +414,71 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {},
         },
       },
+      {
+        name: 'log_compliance',
+        description:
+          'Log daily diet compliance. Use this to record whether Mario followed his nutrition plan today. FULL = 100% on plan, PARTIAL = some deviations, OFF = off-plan day.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['FULL', 'PARTIAL', 'OFF'],
+              description: 'Compliance status: FULL (followed plan 100%), PARTIAL (minor deviations), OFF (off-plan day)',
+            },
+            deviations: {
+              type: 'string',
+              description: 'Free text description of deviations (e.g. "cena: brace + 2 gelati"). Required when status is PARTIAL.',
+            },
+            note: {
+              type: 'string',
+              description: 'Optional note (e.g. reason for OFF day)',
+            },
+            date: {
+              type: 'string',
+              description: 'Date in YYYY-MM-DD format. Defaults to today.',
+            },
+          },
+          required: ['status'],
+        },
+      },
+      {
+        name: 'get_compliance',
+        description:
+          'Get diet compliance records for a date range. Returns compliance status, deviations, and notes for each logged day.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            startDate: {
+              type: 'string',
+              description: 'Start date in YYYY-MM-DD format',
+            },
+            endDate: {
+              type: 'string',
+              description: 'End date in YYYY-MM-DD format',
+            },
+          },
+          required: ['startDate', 'endDate'],
+        },
+      },
+      {
+        name: 'get_today_compliance',
+        description:
+          "Get today's diet compliance. Returns the logged status (FULL/PARTIAL/OFF) or null if not yet logged today.",
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'get_compliance_streak',
+        description:
+          'Get the current streak of consecutive FULL compliance days. Use this to track consistency.',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
     ],
   };
 });
@@ -910,6 +975,116 @@ Remaining: ${data.remaining} kcal`;
 
         return {
           content: [{ type: 'text', text: 'Nutrition plan deleted successfully.' }],
+        };
+      }
+
+      case 'log_compliance': {
+        const { status, deviations, note, date } = args as {
+          status: 'FULL' | 'PARTIAL' | 'OFF';
+          deviations?: string;
+          note?: string;
+          date?: string;
+        };
+
+        const data = await apiCall('/compliance', {
+          method: 'POST',
+          body: JSON.stringify({ status, deviations, note, date }),
+        });
+
+        const statusLabels: Record<string, string> = {
+          FULL: 'Piano rispettato al 100% (FULL)',
+          PARTIAL: 'Deviazioni minori (PARTIAL)',
+          OFF: 'Giornata off-plan (OFF)',
+        };
+
+        const dateLabel = data.compliance.date
+          ? new Date(data.compliance.date).toLocaleDateString('it-IT')
+          : 'oggi';
+
+        let text = `Compliance registrata per ${dateLabel}: ${statusLabels[status]}`;
+        if (deviations) text += `\nDeviazioni: ${deviations}`;
+        if (note) text += `\nNote: ${note}`;
+
+        return {
+          content: [{ type: 'text', text }],
+        };
+      }
+
+      case 'get_compliance': {
+        const { startDate, endDate } = args as { startDate: string; endDate: string };
+        const params = new URLSearchParams({ startDate, endDate });
+        const data = await apiCall(`/compliance?${params.toString()}`);
+
+        if (!data.records || data.records.length === 0) {
+          return {
+            content: [{ type: 'text', text: `No compliance records found for ${startDate} - ${endDate}.` }],
+          };
+        }
+
+        const statusIcons: Record<string, string> = { FULL: 'FULL', PARTIAL: 'PARTIAL', OFF: 'OFF' };
+
+        const lines = data.records.map((r: any) => {
+          const dateStr = new Date(r.date).toLocaleDateString('it-IT');
+          let line = `${dateStr}: ${statusIcons[r.status] || r.status}`;
+          if (r.deviations) line += ` | Deviazioni: ${r.deviations}`;
+          if (r.note) line += ` | Note: ${r.note}`;
+          return line;
+        });
+
+        const fullCount = data.records.filter((r: any) => r.status === 'FULL').length;
+        const partialCount = data.records.filter((r: any) => r.status === 'PARTIAL').length;
+        const offCount = data.records.filter((r: any) => r.status === 'OFF').length;
+
+        const summary = `\nSommario: ${fullCount} FULL, ${partialCount} PARTIAL, ${offCount} OFF (totale: ${data.records.length} giorni)`;
+
+        return {
+          content: [{ type: 'text', text: lines.join('\n') + summary }],
+        };
+      }
+
+      case 'get_today_compliance': {
+        const data = await apiCall('/compliance/today');
+
+        if (!data.compliance) {
+          return {
+            content: [{ type: 'text', text: 'Compliance non ancora registrata oggi. Usa log_compliance per registrarla.' }],
+          };
+        }
+
+        const r = data.compliance;
+        const statusLabels: Record<string, string> = {
+          FULL: 'Piano rispettato al 100%',
+          PARTIAL: 'Deviazioni minori',
+          OFF: 'Giornata off-plan',
+        };
+
+        let text = `Compliance di oggi: ${r.status} - ${statusLabels[r.status] || r.status}`;
+        if (r.deviations) text += `\nDeviazioni: ${r.deviations}`;
+        if (r.note) text += `\nNote: ${r.note}`;
+
+        return {
+          content: [{ type: 'text', text }],
+        };
+      }
+
+      case 'get_compliance_streak': {
+        const data = await apiCall('/compliance/streak');
+
+        const { streak, lastFullDate } = data;
+
+        if (streak === 0) {
+          return {
+            content: [{ type: 'text', text: 'Streak attuale: 0 giorni FULL consecutivi.' }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Streak attuale: ${streak} giorn${streak === 1 ? 'o' : 'i'} FULL consecutiv${streak === 1 ? 'o' : 'i'}!${lastFullDate ? ` (ultimo: ${new Date(lastFullDate).toLocaleDateString('it-IT')})` : ''}`,
+            },
+          ],
         };
       }
 

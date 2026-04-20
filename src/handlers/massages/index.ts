@@ -10,14 +10,33 @@ import { photoMealHandler } from './meal/photo-meal.js';
 import { pdfPlanHandler } from './nutrition-plan/pdf-handler.js';
 import { showMealTypeConfirmation } from '../../menus/meal-menu.js';
 import { detectMealType } from '../callbacks/meal-menu/helpers/ai-meal-type-detection.js';
+import { createComplianceService } from '../../lib/complianceService.js';
 import logger from '../../lib/logger.js';
 
 export const registerMassages = (bot: Bot<MyContext>, db: PrismaClient) => {
+  const complianceService = createComplianceService(db);
+
   const handlers: Record<string, (ctx: MyContext) => Promise<void>> = {
     calorie_target: async (ctx) => await calorieTargetHandler(ctx, db),
     meal_description: async (ctx) => await mealDescription(ctx, db),
     meal_edit_description: async (ctx) =>
       await editMealDescriptionHandler(ctx, db),
+    compliance_deviations: async (ctx) => {
+      const deviations = ctx.message?.text?.trim();
+      ctx.session.waitingFor = undefined;
+      try {
+        const compliance = await complianceService.upsertCompliance({
+          status: 'PARTIAL',
+          deviations: deviations || undefined,
+        });
+        await ctx.reply(
+          `Compliance PARTIAL registrata.\n\nDeviazioni: "${deviations}"\n\nDomani si punta al FULL.`
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Errore sconosciuto';
+        await ctx.reply(`Errore durante il salvataggio: ${message}`);
+      }
+    },
   };
 
   // Text messages - original handler

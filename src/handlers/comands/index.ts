@@ -5,9 +5,11 @@ import type { PrismaClient } from '@prisma/client';
 import { startCommand } from './start/index.js';
 import { mealCommand } from './meal/index.js';
 import { versionCommand } from './version/index.js';
+import { complianceCommand } from './compliance/index.js';
 
 export const registerCommands = (bot: Bot<MyContext>, db: PrismaClient) => {
   startCommand(bot, db); // /start
   mealCommand(bot, db); // /meal
   versionCommand(bot); // /version
+  complianceCommand(bot, db); // /compliance
 };
