@@ -54,7 +54,12 @@ export interface FullPlan {
 }
 
 export interface TargetResponse {
-  targetKcal: number;
+  target: number | null;
+}
+
+export interface TargetSetResponse {
+  success: boolean;
+  target: number;
 }
 
 // --- Plans ---
@@ -90,7 +95,7 @@ export const compliance = {
 // --- Target ---
 export const target = {
   get: () => apiClient.get<TargetResponse>('/api/target'),
-  set: (targetKcal: number) => apiClient.put<TargetResponse>('/api/target', { targetKcal }),
+  set: (calories: number) => apiClient.put<TargetSetResponse>('/api/target', { calories }),
 };
 
 export default apiClient;

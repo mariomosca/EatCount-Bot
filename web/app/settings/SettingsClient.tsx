@@ -30,8 +30,8 @@ export default function SettingsClient({ session }: SettingsClientProps) {
 
   // Sync input con dato fetched
   useEffect(() => {
-    if (targetData?.targetKcal) {
-      setKcalInput(String(targetData.targetKcal));
+    if (targetData?.target) {
+      setKcalInput(String(targetData.target));
     }
   }, [targetData]);
 
@@ -39,8 +39,8 @@ export default function SettingsClient({ session }: SettingsClientProps) {
   const updateTargetMutation = useMutation({
     mutationFn: (kcal: number) => target.set(kcal).then((r) => r.data),
     onSuccess: (data) => {
-      queryClient.setQueryData(['target'], data);
-      toast.success(`Target aggiornato: ${data.targetKcal} kcal/giorno`);
+      queryClient.setQueryData(['target'], { target: data.target });
+      toast.success(`Target aggiornato: ${data.target} kcal/giorno`);
     },
     onError: () => {
       toast.error('Errore nel salvataggio del target. Riprova.');
