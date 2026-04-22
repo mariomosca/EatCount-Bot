@@ -11,6 +11,36 @@ const apiClient = axios.create({
 
 export type ComplianceStatus = 'FULL' | 'PARTIAL' | 'OFF';
 
+export type MealSlot =
+  | 'BREAKFAST'
+  | 'MORNING_SNACK'
+  | 'LUNCH'
+  | 'AFTERNOON_SNACK'
+  | 'DINNER';
+
+export const MEAL_SLOTS: MealSlot[] = [
+  'BREAKFAST',
+  'MORNING_SNACK',
+  'LUNCH',
+  'AFTERNOON_SNACK',
+  'DINNER',
+];
+
+export const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
+  BREAKFAST: 'Colazione',
+  MORNING_SNACK: 'Spuntino mattina',
+  LUNCH: 'Pranzo',
+  AFTERNOON_SNACK: 'Spuntino pomeriggio',
+  DINNER: 'Cena',
+};
+
+export interface MealComplianceRecord {
+  id: string;
+  slot: MealSlot;
+  status: ComplianceStatus;
+  note?: string | null;
+}
+
 export interface ComplianceRecord {
   id: string;
   userId: string;
@@ -20,6 +50,7 @@ export interface ComplianceRecord {
   note?: string | null;
   createdAt: string;
   updatedAt: string;
+  meals?: MealComplianceRecord[];
 }
 
 export interface StreakResult {
@@ -84,8 +115,24 @@ export const plans = {
 
 // --- Compliance ---
 export const compliance = {
-  log: (data: { status: ComplianceStatus; deviations?: string; note?: string; date?: string }) =>
+  log: (data: {
+    status?: ComplianceStatus;
+    deviations?: string;
+    note?: string;
+    date?: string;
+    meals?: { slot: MealSlot; status: ComplianceStatus; note?: string }[];
+  }) =>
     apiClient.post<{ success: boolean; compliance: ComplianceRecord }>('/api/compliance', data),
+  logMeal: (data: {
+    slot: MealSlot;
+    status: ComplianceStatus;
+    note?: string;
+    date?: string;
+  }) =>
+    apiClient.post<{ success: boolean; compliance: ComplianceRecord }>(
+      '/api/compliance/meal',
+      data
+    ),
   getRange: (startDate: string, endDate: string) =>
     apiClient.get<{ records: ComplianceRecord[] }>('/api/compliance', { params: { startDate, endDate } }),
   getToday: () => apiClient.get<{ compliance: ComplianceRecord | null }>('/api/compliance/today'),

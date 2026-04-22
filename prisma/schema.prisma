@@ -144,7 +144,7 @@ model NutritionPlanDay {
 }
 
 model NutritionPlanMeal {
-  id          String   @id @default(uuid())
+  id          String           @id @default(uuid())
   dayId       String
   mealType    MealType
   targetKcal  Int
@@ -173,6 +173,14 @@ enum ComplianceStatus {
   OFF
 }
 
+enum MealSlot {
+  BREAKFAST
+  MORNING_SNACK
+  LUNCH
+  AFTERNOON_SNACK
+  DINNER
+}
+
 model DailyCompliance {
   id         String           @id @default(uuid())
   userId     String
@@ -183,7 +191,22 @@ model DailyCompliance {
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
   user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meals      MealCompliance[]
 
   @@unique([userId, date])
   @@map("daily_compliance")
+}
+
+model MealCompliance {
+  id                String           @id @default(uuid())
+  dailyComplianceId String
+  slot              MealSlot
+  status            ComplianceStatus
+  note              String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  dailyCompliance   DailyCompliance  @relation(fields: [dailyComplianceId], references: [id], onDelete: Cascade)
+
+  @@unique([dailyComplianceId, slot])
+  @@map("meal_compliance")
 }

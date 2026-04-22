@@ -4,12 +4,18 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Flame, TrendingUp, CalendarDays } from 'lucide-react';
-import { compliance, plans, type ComplianceStatus } from '@/lib/api';
+import {
+  compliance,
+  plans,
+  type ComplianceStatus,
+  type MealSlot,
+} from '@/lib/api';
 import {
   ComplianceButtons,
   ComplianceStatusBadge,
   DeviationsDialog,
 } from '@/components/compliance/ComplianceButtons';
+import { MealComplianceGrid } from '@/components/compliance/MealComplianceGrid';
 import { MealCard } from '@/components/plan/MealCard';
 
 // Skeleton loader
@@ -71,8 +77,41 @@ export default function DashboardClient() {
     },
   });
 
+  // Mutation log single meal
+  const logMealMutation = useMutation({
+    mutationFn: (data: { slot: MealSlot; status: ComplianceStatus }) =>
+      compliance.logMeal(data).then((r) => r.data),
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({ queryKey: ['compliance', 'today'] });
+      const previous = queryClient.getQueryData(['compliance', 'today']);
+      queryClient.setQueryData(['compliance', 'today'], (old: any) => {
+        const existingMeals = old?.compliance?.meals ?? [];
+        const others = existingMeals.filter((m: any) => m.slot !== newData.slot);
+        const updated = [
+          ...others,
+          { id: `temp-${newData.slot}`, slot: newData.slot, status: newData.status },
+        ];
+        return {
+          ...old,
+          compliance: { ...(old?.compliance ?? {}), meals: updated },
+        };
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['compliance', 'today'], context.previous);
+      }
+      toast.error('Errore nel salvare il pasto. Riprova.');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['compliance'] });
+    },
+  });
+
   const currentStatus = (todayData?.compliance?.status ?? null) as ComplianceStatus | null;
-  const isLogging = logMutation.isPending;
+  const currentMeals = todayData?.compliance?.meals;
+  const isLogging = logMutation.isPending || logMealMutation.isPending;
 
   const handleFull = () => {
     logMutation.mutate({ status: 'FULL' });
@@ -131,13 +170,22 @@ export default function DashboardClient() {
             <Skeleton className="h-20" />
           </div>
         ) : (
-          <ComplianceButtons
-            currentStatus={currentStatus}
-            isLoading={isLogging}
-            onFull={handleFull}
-            onPartial={handlePartial}
-            onOff={handleOff}
-          />
+          <>
+            <ComplianceButtons
+              currentStatus={currentStatus}
+              isLoading={isLogging}
+              onFull={handleFull}
+              onPartial={handlePartial}
+              onOff={handleOff}
+            />
+            <div className="pt-2 border-t border-slate-800">
+              <MealComplianceGrid
+                meals={currentMeals}
+                isLoading={isLogging}
+                onLogMeal={(slot, status) => logMealMutation.mutate({ slot, status })}
+              />
+            </div>
+          </>
         )}
 
         {/* Deviations description se presente */}

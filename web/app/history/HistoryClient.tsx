@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { compliance } from '@/lib/api';
 import { HeatmapGrid, HeatmapEmptyState } from '@/components/compliance/HeatmapGrid';
+import { MealComplianceSummary } from '@/components/compliance/MealComplianceGrid';
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-lg bg-slate-800 ${className}`} />;
@@ -98,6 +99,48 @@ export default function HistoryClient() {
           <HeatmapGrid records={records} startDate={startDate} endDate={endDate} />
         )}
       </div>
+
+      {/* Dettaglio per pasto - ultimi giorni con breakdown */}
+      {!isLoading && !error && (() => {
+        const withMeals = records
+          .filter((r) => r.meals && r.meals.length > 0)
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .slice(0, 7);
+        if (withMeals.length === 0) return null;
+        return (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div>
+              <h2 className="font-semibold text-white">Dettaglio pasti (ultimi giorni)</h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Breakdown per colazione, spuntini, pranzo e cena
+              </p>
+            </div>
+            <div className="space-y-4">
+              {withMeals.map((r) => {
+                const dayLabel = new Date(r.date).toLocaleDateString('it-IT', {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                });
+                return (
+                  <div
+                    key={r.id}
+                    className="border border-slate-800 rounded-xl p-3 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-white capitalize">{dayLabel}</p>
+                      <span className="text-xs font-mono text-slate-500">
+                        {r.status}
+                      </span>
+                    </div>
+                    <MealComplianceSummary meals={r.meals} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
