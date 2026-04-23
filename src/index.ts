@@ -24,6 +24,18 @@ export const startTelegramBot = async (token: string) => {
   registerMassages(bot, db);
   registerKeyboardsCallbacks(bot, db);
 
+  try {
+    await bot.api.setMyCommands([
+      { command: 'start', description: 'Avvia il bot' },
+      { command: 'meal', description: 'Registra un pasto' },
+      { command: 'compliance', description: 'Feedback piano alimentare' },
+      { command: 'version', description: 'Versione bot' },
+    ]);
+    logger.info('[Bot]: Commands menu registered');
+  } catch (error) {
+    logger.error('[Bot]: Failed to register commands menu', { error });
+  }
+
   bot.catch((err) => {
     botErrorLogger(err);
   });
@@ -34,23 +46,25 @@ export const startTelegramBot = async (token: string) => {
     async () => {
       try {
         const complianceService = createComplianceService(db);
-        const todayCompliance = await complianceService.getTodayCompliance();
+        const fullyLogged = await complianceService.isTodayFullyLogged();
 
-        if (!todayCompliance) {
-          logger.info('[Cron]: Sending daily compliance reminder');
+        if (!fullyLogged) {
+          logger.info('[Cron]: Sending daily compliance reminder (not all meals logged)');
           const { InlineKeyboard } = await import('grammy');
           const keyboard = new InlineKeyboard()
             .text('Piano OK ✓', 'compliance_full')
-            .text('Deviazioni ⚠️', 'compliance_partial')
+            .row()
+            .text('Per pasto ⚙️', 'compliance_per_meal')
+            .row()
             .text('Off day ✕', 'compliance_off');
 
           await bot.api.sendMessage(
             MARIO_TELEGRAM_ID,
-            'Reminder: compliance dieta non ancora registrata oggi.\n\nCome e\' andata con il piano alimentare?',
+            'Reminder: non tutti i pasti di oggi sono stati registrati.\n\nCome e\' andata con il piano alimentare?',
             { reply_markup: keyboard }
           );
         } else {
-          logger.info(`[Cron]: Compliance already logged today (${todayCompliance.status}), skipping reminder`);
+          logger.info('[Cron]: All meals already logged today, skipping reminder');
         }
       } catch (error) {
         logger.error('[Cron]: Failed to send compliance reminder', { error });

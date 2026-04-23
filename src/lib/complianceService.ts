@@ -223,6 +223,13 @@ export const createComplianceService = (db: PrismaClient) => {
     return record;
   }
 
+  // True only when all 5 meal slots are logged for today
+  async function isTodayFullyLogged() {
+    const record = await getTodayCompliance();
+    if (!record) return false;
+    return record.meals.length >= MEAL_SLOTS.length;
+  }
+
   // Shortcut: mark all 5 meals as given status for today
   async function setAllMeals(status: ComplianceStatus, dateStr?: string) {
     const meals: MealComplianceInput[] = MEAL_SLOTS.map((slot) => ({
@@ -287,6 +294,7 @@ export const createComplianceService = (db: PrismaClient) => {
     setAllMeals,
     listCompliance,
     getTodayCompliance,
+    isTodayFullyLogged,
     getStreak,
   };
 };
