@@ -6,8 +6,8 @@ import { config } from './envconfig.js';
 // Initialize database
 const db = initDb();
 
-// Start API server (for MCP integration)
-startApiServer(db);
+// Start Telegram bot first so we can wire the bot instance into API debug routes
+const bot = await startTelegramBot(config.telegram.botToken, db);
 
-// Start Telegram bot
-await startTelegramBot(config.telegram.botToken);
+// Start API server (for MCP integration); pass bot to enable /api/debug/* routes
+startApiServer(db, bot);

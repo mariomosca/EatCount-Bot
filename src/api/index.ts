@@ -1,17 +1,20 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import type { PrismaClient } from '@prisma/client';
+import type { Bot } from 'grammy';
 import fs from 'fs';
 import path from 'path';
 
 import { config } from '../../envconfig.js';
 import logger from '../lib/logger.js';
+import type { MyContext } from '../types.js';
 
 import { createMealsRoutes } from './routes/meals.js';
 import { createSummaryRoutes } from './routes/summary.js';
 import { createTargetRoutes } from './routes/target.js';
 import { createPlansRoutes } from './routes/plans.js';
 import { createComplianceRoutes } from './routes/compliance.js';
+import { createDebugRoutes } from './routes/debug.js';
 
 // Get version from package.json (works in both dev and prod)
 const pkgPath = path.join(process.cwd(), 'package.json');
@@ -34,7 +37,7 @@ const apiKeyAuth = (apiKey: string) => {
   };
 };
 
-export const startApiServer = (db: PrismaClient) => {
+export const startApiServer = (db: PrismaClient, bot?: Bot<MyContext>) => {
   const app = new Hono();
 
   // Health check (no auth required)
@@ -59,6 +62,9 @@ export const startApiServer = (db: PrismaClient) => {
   api.route('/target', createTargetRoutes(db));
   api.route('/plans', createPlansRoutes(db));
   api.route('/compliance', createComplianceRoutes(db));
+  if (bot) {
+    api.route('/debug', createDebugRoutes(db, bot));
+  }
 
   app.route('/api', api);
 

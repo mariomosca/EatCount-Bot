@@ -13,9 +13,8 @@ import { registerKeyboardsCallbacks } from './handlers/callbacks/index.js';
 
 const MARIO_TELEGRAM_ID = '179533089';
 
-export const startTelegramBot = async (token: string) => {
+export const startTelegramBot = async (token: string, db = initDb()) => {
   const bot = new Bot<MyContext>(token);
-  const db = initDb();
 
   botRequestLogger(bot);
 
@@ -88,4 +87,6 @@ export const startTelegramBot = async (token: string) => {
   } catch (error) {
     logger.error('[Bot]: Failed to start', { error });
   }
+
+  return bot;
 };
