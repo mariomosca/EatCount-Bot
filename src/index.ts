@@ -28,6 +28,7 @@ export const startTelegramBot = async (token: string, db = initDb()) => {
       { command: 'start', description: 'Avvia il bot' },
       { command: 'meal', description: 'Registra un pasto' },
       { command: 'compliance', description: 'Feedback piano alimentare' },
+      { command: 'web', description: 'Link al pannello web' },
       { command: 'version', description: 'Versione bot' },
     ]);
     logger.info('[Bot]: Commands menu registered');

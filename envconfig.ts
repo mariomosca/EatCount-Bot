@@ -28,6 +28,11 @@ export const config = {
   telegram: {
     botToken: requireEnv('TELEGRAM_BOT_TOKEN'),
   },
+  web: {
+    panelUrl:
+      optionalEnv('WEB_PANEL_URL') ||
+      'https://web-production-b996d.up.railway.app',
+  },
   openai: {
     apiKey: requireEnv('OPENAI_API_KEY'),
   },
