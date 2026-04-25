@@ -7,6 +7,8 @@ interface HeatmapGridProps {
   records: ComplianceRecord[];
   startDate: Date;
   endDate: Date;
+  onSelectDate?: (date: string) => void;
+  selectedDate?: string | null;
 }
 
 const STATUS_COLORS: Record<ComplianceStatus | 'NONE', string> = {
@@ -35,7 +37,7 @@ function addDays(date: Date, days: number): Date {
   return result;
 }
 
-export function HeatmapGrid({ records, startDate, endDate }: HeatmapGridProps) {
+export function HeatmapGrid({ records, startDate, endDate, onSelectDate, selectedDate }: HeatmapGridProps) {
   // Build mappa date -> record
   const recordMap = new Map<string, ComplianceRecord>();
   for (const record of records) {
@@ -103,18 +105,34 @@ export function HeatmapGrid({ records, startDate, endDate }: HeatmapGridProps) {
               year: 'numeric',
             });
 
+            const isSelected = selectedDate === key;
+            const clickable = !isFuture && !!onSelectDate;
             return (
               <div key={key} className="group relative">
-                <div
-                  className={cn(
-                    'aspect-square rounded-sm transition-colors cursor-default',
-                    isFuture
-                      ? 'bg-slate-900 opacity-40'
-                      : STATUS_COLORS[status]
-                  )}
-                  aria-label={`${dateLabel}: ${STATUS_LABELS[status]}`}
-                  role="img"
-                />
+                {clickable ? (
+                  <button
+                    type="button"
+                    onClick={() => onSelectDate!(key)}
+                    aria-label={`${dateLabel}: ${STATUS_LABELS[status]}. Clicca per modificare.`}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      'aspect-square w-full rounded-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      STATUS_COLORS[status],
+                      isSelected && 'ring-2 ring-white ring-offset-2 ring-offset-slate-900'
+                    )}
+                  />
+                ) : (
+                  <div
+                    className={cn(
+                      'aspect-square rounded-sm transition-colors cursor-default',
+                      isFuture
+                        ? 'bg-slate-900 opacity-40'
+                        : STATUS_COLORS[status]
+                    )}
+                    aria-label={`${dateLabel}: ${STATUS_LABELS[status]}`}
+                    role="img"
+                  />
+                )}
                 {/* Tooltip */}
                 {!isFuture && (
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-10 hidden group-hover:block pointer-events-none">

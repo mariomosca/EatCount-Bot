@@ -1,10 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { compliance } from '@/lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { compliance, type ComplianceStatus, type MealSlot } from '@/lib/api';
 import { HeatmapGrid, HeatmapEmptyState } from '@/components/compliance/HeatmapGrid';
-import { MealComplianceSummary } from '@/components/compliance/MealComplianceGrid';
+import {
+  MealComplianceGrid,
+  MealComplianceSummary,
+} from '@/components/compliance/MealComplianceGrid';
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-lg bg-slate-800 ${className}`} />;
@@ -27,6 +30,8 @@ function formatDate(date: Date): string {
 
 export default function HistoryClient() {
   const [range, setRange] = useState<RangeOption>('30');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const endDate = new Date();
   endDate.setHours(23, 59, 59, 999);
@@ -41,12 +46,35 @@ export default function HistoryClient() {
 
   const records = data?.records ?? [];
 
+  const logMealMutation = useMutation({
+    mutationFn: (vars: { slot: MealSlot; status: ComplianceStatus; date: string }) =>
+      compliance.logMeal(vars).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['compliance'] });
+    },
+  });
+
+  const selectedRecord = selectedDate
+    ? records.find((r) => r.date.split('T')[0] === selectedDate)
+    : null;
+
+  const selectedDateLabel = selectedDate
+    ? new Date(selectedDate).toLocaleDateString('it-IT', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : '';
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-white">Storico Compliance</h1>
-          <p className="text-slate-400 text-sm mt-1">Aderenza al piano alimentare nel tempo</p>
+          <p className="text-slate-400 text-sm mt-1">
+            Aderenza al piano alimentare nel tempo. Clicca un giorno per modificarlo.
+          </p>
         </div>
 
         {/* Filtro range */}
@@ -96,9 +124,51 @@ export default function HistoryClient() {
         ) : records.length === 0 ? (
           <HeatmapEmptyState />
         ) : (
-          <HeatmapGrid records={records} startDate={startDate} endDate={endDate} />
+          <HeatmapGrid
+            records={records}
+            startDate={startDate}
+            endDate={endDate}
+            onSelectDate={(d) => setSelectedDate((cur) => (cur === d ? null : d))}
+            selectedDate={selectedDate}
+          />
         )}
       </div>
+
+      {/* Editor giorno selezionato */}
+      {selectedDate && (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-white capitalize">{selectedDateLabel}</h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Modifica lo stato per ciascun pasto.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedDate(null)}
+              className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-800 transition-colors"
+              aria-label="Chiudi editor"
+            >
+              Chiudi
+            </button>
+          </div>
+
+          <MealComplianceGrid
+            meals={selectedRecord?.meals}
+            isLoading={logMealMutation.isPending}
+            onLogMeal={(slot, status) =>
+              logMealMutation.mutate({ slot, status, date: selectedDate })
+            }
+          />
+
+          {logMealMutation.isError && (
+            <p className="text-xs text-red-400">
+              Errore nel salvataggio. Riprova.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Dettaglio per pasto - ultimi giorni con breakdown */}
       {!isLoading && !error && (() => {
